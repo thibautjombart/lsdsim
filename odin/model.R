@@ -37,12 +37,12 @@
 
 ## Note the use of [i] syntax for indexing populations
 
-update(S[]) <- S[i] - n_S_E[i] - n_S_V[i]
-update(E[]) <- E[i] + n_S_E[i] - n_E_I[i]
+update(S[]) <- S[i] - n_S_E[i] - n_S_V[i] - n_S_D[i]
+update(E[]) <- E[i] + n_S_E[i] - n_E_I[i] - n_E_D[i]
 update(I[]) <- I[i] + n_E_I[i] - n_I_R[i] - n_I_D[i]
-update(R[]) <- R[i] + n_I_R[i]
-update(D[]) <- D[i] + n_I_D[i]
-update(V[]) <- V[i] + n_S_V[i]
+update(R[]) <- R[i] + n_I_R[i] - n_R_D[i]
+update(D[]) <- D[i] + n_S_D[i] + n_E_D[i] + n_I_D[i] + n_R_D[i] + n_V_D[i]
+update(V[]) <- V[i] + n_S_V[i] - n_V_D[i]
 
 ## N is the living population, i.e. people able to have contacts with S
 N[] <- S[i] + E[i] + I[i] + R[i] + V[i]
@@ -151,13 +151,18 @@ dim(p_S_out) <- n_populations
 dim(n_S_out) <- n_populations
 dim(n_S_E) <- n_populations
 dim(n_S_V) <- n_populations
+dim(n_S_D) <- n_populations
 
 
 dim(n_E_I) <- n_populations
+dim(n_E_D) <- n_populations
 
 dim(n_I_out) <- n_populations
 dim(n_I_R) <- n_populations
 dim(n_I_D) <- n_populations
+
+dim(n_R_D) <- n_populations
+dim(n_V_D) <- n_populations
 
 dim(active) <- n_populations
 dim(status) <- n_populations
