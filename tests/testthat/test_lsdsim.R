@@ -124,3 +124,25 @@ test_that(
 
 
 
+test_that(
+  "vaccination works as expected", {
+    res <- lsdsim(time = 10, grid_size = 10, 
+                  ini_S = 1e5, 
+                  ini_V = 0,
+                  vacc_coverage = 0.1, # 10% vaccination per day
+                  vacc_efficacy = 0.5 # 50% efficacy
+    )
+    
+    S <- res[, grep("S_", colnames(res))]
+    V <- res[, grep("V_", colnames(res))]
+   
+    ## expectation: about 5% of individuals vaccinated
+    res <- V[2,] / S[1, ] 
+    expect_true(all(res > 0.04))
+    expect_true(all(res < 0.06))
+  }
+)
+
+
+
+

@@ -94,6 +94,7 @@ lsdsim <- function(grid_size = 1,
     I[t + 1, ] <- I[t, ] + n_E_I - n_I_D - n_I_R
     D[t + 1, ] <- D[t, ] + n_I_D
     R[t + 1, ] <- R[t, ] + n_I_R
+    V[t + 1, ] <- V[t, ] + n_S_V
   }
   
   
