@@ -2,3 +2,4 @@
 outputs
 .Rhistory
 *.Rproj
+.Rproj.user

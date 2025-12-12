@@ -95,5 +95,17 @@ lsdsim <- function(grid_size = 1,
     D[t + 1, ] <- D[t, ] + n_I_D
     R[t + 1, ] <- R[t, ] + n_I_R
   }
+  
+  
+  ## format output
+  colnames(S) <- paste("S", seq_len(n_pop), sep = "_")
+  colnames(E) <- paste("E", seq_len(n_pop), sep = "_")
+  colnames(I) <- paste("I", seq_len(n_pop), sep = "_")
+  colnames(C) <- paste("C", seq_len(n_pop), sep = "_")
+  colnames(D) <- paste("D", seq_len(n_pop), sep = "_")
+  colnames(R) <- paste("R", seq_len(n_pop), sep = "_")
+  colnames(V) <- paste("V", seq_len(n_pop), sep = "_")
+  
+  cbind.data.frame(S, E, I, C, D, R, V)
 }
 
