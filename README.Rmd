@@ -1,0 +1,14 @@
+---
+title: "A stochastic meta-population model of LSDV epidemics"
+author: "Thibaut Jombart"
+date: "`r Sys.Date()`"
+output: github_document
+---
+
+
+## Getting started
+
+
+
+
+
