@@ -12,6 +12,9 @@ lsdsim <- function(grid_size = 1,
                    cfr = 0.1, # case fatality ratio
                    vacc_coverage = 0,
                    vacc_efficacy = 0.65,
+                   interv_delay = 1e30, # how many day after 1st case to start
+                   interv_release = 0, # how many days after the last case to stop
+                   interv_type = 1, #1: mass cull, 2: quarantine
                    delta = NULL, 
                    diffusion = 0,
                    ini_S = 0,
@@ -40,7 +43,7 @@ lsdsim <- function(grid_size = 1,
   xy <- make_grid(grid_size)
   delta <- make_delta(xy, diffusion)
   
-  S <- E <- I <- C <- D <- R <- V <- matrix(0, nrow = time, ncol = n_pop)
+  S <- E <- I <- C <- D <- R <- V <- status <- matrix(0, nrow = time, ncol = n_pop)
   S[1, ] <- ini_S
   E[1, ] <- ini_E
   I[1, ] <- ini_I
@@ -50,9 +53,10 @@ lsdsim <- function(grid_size = 1,
   V[1, ] <- ini_V
   
   has_cases <- rep(FALSE, n_pop)
-  in_response <- rep(FALSE, n_pop)
   days_with_cases <- rep(0, n_pop)
-  
+  days_without_cases <- rep(0, n_pop)
+  in_response <- rep(FALSE, n_pop)
+
   p_S_V <- vacc_coverage * vacc_efficacy
   rate_S_V <- -log(1 - p_S_V)
   
@@ -61,6 +65,13 @@ lsdsim <- function(grid_size = 1,
   p_I_out <- 1 - exp(-gamma)
   
   for (t in seq_len(time - 1)) {
+    
+    ## state monitoring variables
+    has_cases <- has_cases | (I[t, ] > 0)
+    days_with_cases[has_cases] <- days_with_cases[has_cases] + 1
+    days_without_cases[I[t, ] == 0] <- days_without_cases[I[t, ] == 0] + 1
+    in_response <- (days_with_cases >= interv_delay) & (days_without_cases <= interv_release)
+    status[t + 1, ] <- as.integer(in_response)
     
     ## individuals leaving S...
     ## - to E (new infections)
@@ -106,7 +117,8 @@ lsdsim <- function(grid_size = 1,
   colnames(D) <- paste("D", seq_len(n_pop), sep = "_")
   colnames(R) <- paste("R", seq_len(n_pop), sep = "_")
   colnames(V) <- paste("V", seq_len(n_pop), sep = "_")
+  colnames(status) <- paste("status", seq_len(n_pop), sep = "_")
   
-  cbind.data.frame(S, E, I, C, D, R, V)
+  cbind.data.frame(S, E, I, C, D, R, V, status)
 }
 

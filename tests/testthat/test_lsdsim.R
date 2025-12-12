@@ -1,13 +1,13 @@
 test_that(
   "lsdsim output has the right dimensions", {
     res <- lsdsim()
-    expect_equal(dim(res), c(365, 7))
+    expect_equal(dim(res), c(365, 8))
     
     res <- lsdsim(time = 1)
-    expect_equal(dim(res), c(1, 7))
+    expect_equal(dim(res), c(1, 8))
     
     res <- lsdsim(time = 10, grid_size = 5)
-    expect_equal(dim(res), c(10, 7*5*5))
+    expect_equal(dim(res), c(10, 8*5*5))
   }
 )
 
@@ -17,7 +17,7 @@ test_that(
   "lsdsim output has the right column names", {
     res <- lsdsim(time = 10, grid_size = 2)
     exp_names <- lapply(
-      c("S", "E", "I", "C", "D", "R", "V"), 
+      c("S", "E", "I", "C", "D", "R", "V", "status"), 
       paste, 1:4, sep = "_")
     exp_names <- unlist(exp_names)
     expect_equal(colnames(res), exp_names)
@@ -123,7 +123,6 @@ test_that(
 )
 
 
-
 test_that(
   "vaccination works as expected", {
     res <- lsdsim(time = 10, grid_size = 10, 
@@ -144,5 +143,41 @@ test_that(
 )
 
 
+test_that(
+  "response triggers when it should", {
+    res <- lsdsim(time = 20, grid_size = 3, 
+                  ini_S = 1e5, 
+                  ini_I = c(1, rep(0, 9)),
+                  interv_delay = 14 # response 14 days after 1st case
+    )
+    
+    status <- res[, grep("status_", colnames(res))]
+
+    ## expectation: about 5% of individuals vaccinated
+    expect_equal(status[, 1], rep(0:1, c(14, 6)))
+    expect_true(all(status[, -1] == 0))
+  }
+)
+
+
+test_that(
+  "response stops when it should", {
+    res <- lsdsim(time = 20, grid_size = 3, 
+                  ini_S = 1e5, 
+                  ini_I = c(1, rep(0, 9)),
+                  gamma = 1e30, # immediately leaving I
+                  beta = 0, # no transmission beyond first case
+                  interv_delay = 4, # response 4 days after 1st case
+                  interv_release = 10 # response stops 10 days after last case
+    )
+    
+    status <- res[, grep("status_", colnames(res))]
+    
+    ## expectation: intervention from day 5 to 12
+    expect_true(all(status[1:4, 1] == 0))
+    expect_true(all(status[5:12, 1] == 1))
+    expect_true(all(status[13:20, 1] == 0))
+  }
+)
 
 
