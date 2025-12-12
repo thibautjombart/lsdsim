@@ -181,3 +181,28 @@ test_that(
 )
 
 
+test_that(
+  "culling works as expected", {
+    res <- lsdsim(time = 20, grid_size = 3, 
+                  ini_S = 1000, 
+                  ini_E = c(10, rep(0, 8)),
+                  ini_I = c(10, rep(0, 8)),
+                  sigma = 0, # no leaving E
+                  gamma = 0, # no leaving I
+                  beta = 0, # no transmission beyond first case
+                  interv_delay = 4, # response 4 days after 1st case
+                  interv_release = 10 # response stops 10 days after last case
+    )
+    
+    C <- res[, grep("C_", colnames(res))]
+    
+    ## expectation: intervention from day 5 to 12
+    expect_true(all(C[1:4, 1] == 0))
+    expect_true(all(C[5:20, 1] == 1010))
+    expect_true(all(status[, -1] == 0))
+    expect_equal(res[, "E_1"], rep(c(10, 0), c(4, 16)))
+  }
+)
+
+
+

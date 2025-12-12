@@ -60,8 +60,6 @@ lsdsim <- function(grid_size = 1,
   p_S_V <- vacc_coverage * vacc_efficacy
   rate_S_V <- -log(1 - p_S_V)
   
-  p_E_I <- 1 - exp(-sigma)
-  
   p_I_out <- 1 - exp(-gamma)
   
   for (t in seq_len(time - 1)) {
@@ -79,17 +77,43 @@ lsdsim <- function(grid_size = 1,
     ## (culling will be handled separately)
     
     rate_S_E <- as.vector(delta %*% (beta * I[t, ]))
-    rate_S_out <- rate_S_E + rate_S_V
+    if (interv_type == 1L) {
+      rate_S_C <- c(0, 1e30)[in_response + 1] # culling
+      rate_E_C <- c(0, 1e30)[in_response + 1] # culling
+      rate_I_C <- c(0, 1e30)[in_response + 1] # culling
+      rate_R_C <- c(0, 1e30)[in_response + 1] # culling
+      rate_V_C <- c(0, 1e30)[in_response + 1] # culling
+    } else {
+      rate_S_C <- 0
+      rate_E_C <- 0
+      rate_I_C <- 0
+      rate_R_C <- 0
+      rate_V_C <- 0
+    }
+    
+    ## nested binomials are used to decide where individuals leaving S go
+    rate_S_out <- rate_S_E + rate_S_V + rate_S_C
     p_S_out <- 1 - exp(-rate_S_out)
     n_S_out <- rbinom(n_pop, size = S[t, ], prob = p_S_out)
-    rate_ratio <- rate_S_E / rate_S_out
-    rate_ratio[!is.finite(rate_ratio)] <- 0
-    n_S_E <- rbinom(n_pop, size = n_S_out, prob = rate_ratio)
-    n_S_V <- n_S_out - n_S_E
+    
+    S_E_ratio <- rate_S_E / rate_S_out
+    S_E_ratio[!is.finite(S_E_ratio)] <- 0
+    n_S_E <- rbinom(n_pop, size = n_S_out, prob = S_E_ratio)
+    
+    S_V_ratio <- rate_S_V / (rate_S_V + rate_S_C)
+    S_V_ratio[!is.finite(S_V_ratio)] <- 0
+    n_S_V <- rbinom(n_pop, size = n_S_out - n_S_E, prob = S_V_ratio)
+    n_S_C <- n_S_out - n_S_E - n_S_V
     
     
     ## individuals leaving E
-    n_E_I <- rbinom(n_pop, size = E[t, ], prob = p_E_I)
+    rate_E_out <- sigma + rate_E_C
+    p_E_out <- 1 - exp(-rate_E_out)
+    n_E_out <- rbinom(n_pop, size = E[t, ], prob = p_E_out)
+    E_I_ratio <- sigma / rate_E_out
+    E_I_ratio[!is.finite(E_I_ratio)] <- 0
+    n_E_I <- rbinom(n_pop, size = n_E_out, prob = E_I_ratio)
+    n_E_C <- n_E_out - n_E_I
     
     ## individuals leaving I...
     ## - to recover (R)
@@ -100,9 +124,10 @@ lsdsim <- function(grid_size = 1,
     n_I_R <- n_I_out - n_I_D
     
     ## all changes
-    S[t + 1, ] <- S[t, ] - n_S_E - n_S_V
-    E[t + 1, ] <- E[t, ] + n_S_E - n_E_I
+    S[t + 1, ] <- S[t, ] - n_S_E - n_S_V - n_S_C
+    E[t + 1, ] <- E[t, ] + n_S_E - n_E_I - n_E_C
     I[t + 1, ] <- I[t, ] + n_E_I - n_I_D - n_I_R
+    C[t + 1, ] <- C[t, ] + n_S_C + n_E_C
     D[t + 1, ] <- D[t, ] + n_I_D
     R[t + 1, ] <- R[t, ] + n_I_R
     V[t + 1, ] <- V[t, ] + n_S_V
