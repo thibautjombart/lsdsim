@@ -96,11 +96,31 @@ test_that(
                   diffusion = 0.1 # 10% diffusion
     )
     I <- res[, grep("I_", colnames(res))]
-    
    
     expect_true(all(I[10, ] >= 5000))
     
   }
 )
+
+
+test_that(
+  "deaths are within expected ratios", {
+    res <- lsdsim(time = 10, grid_size = 10, 
+                  ini_S = 1e5, 
+                  ini_I = c(10, rep(0, 8)), 
+                  beta = 1e30, # super high infection
+                  sigma = 1e30, # super fast E->I
+                  gamma = 1e30, # super fast I->...
+                  cfr = 0.4, # 40% mortality
+                  diffusion = 0.1 # 10% diffusion
+    )
+    R <- res[, grep("R_", colnames(res))]
+    D <- res[, grep("D_", colnames(res))]
+    res <- as.numeric(na.omit(D/(R+D)))
+    expect_true(all(res > 0.39))
+    expect_true(all(res < 0.41))
+  }
+)
+
 
 
