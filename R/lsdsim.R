@@ -60,7 +60,6 @@ lsdsim <- function(grid_size = 1,
   p_S_V <- vacc_coverage * vacc_efficacy
   rate_S_V <- -log(1 - p_S_V)
   
-  p_I_out <- 1 - exp(-gamma)
   
   for (t in seq_len(time - 1)) {
     
@@ -117,17 +116,27 @@ lsdsim <- function(grid_size = 1,
     
     ## individuals leaving I...
     ## - to recover (R)
-    ## - to die (D)
+    ## - to die from the disease (D)
+    ## - to be culled (C)
+    ##
+    ## We first draw individuals going to R or D (i.e. not culled), then draw
+    ## disease outcome from the CFR.
   
+    rate_I_out <- gamma + rate_I_C
+    p_I_out <- 1 - exp(-rate_I_out)
     n_I_out <- rbinom(n_pop, size = I[t, ], prob = p_I_out)
-    n_I_D <- rbinom(n_pop, size = n_I_out, prob = cfr)
-    n_I_R <- n_I_out - n_I_D
+    I_RD_ratio <- gamma / rate_I_out
+    I_RD_ratio[!is.finite(I_RD_ratio)] <- 0
+    n_I_RD <- rbinom(n_pop, size = n_I_out, prob = I_RD_ratio)
+    n_I_D <- rbinom(n_pop, size = n_I_RD, prob = cfr)
+    n_I_R <- n_I_RD - n_I_D
+    n_I_C <- n_I_out - n_I_RD
     
     ## all changes
     S[t + 1, ] <- S[t, ] - n_S_E - n_S_V - n_S_C
     E[t + 1, ] <- E[t, ] + n_S_E - n_E_I - n_E_C
-    I[t + 1, ] <- I[t, ] + n_E_I - n_I_D - n_I_R
-    C[t + 1, ] <- C[t, ] + n_S_C + n_E_C
+    I[t + 1, ] <- I[t, ] + n_E_I - n_I_D - n_I_R - n_I_C
+    C[t + 1, ] <- C[t, ] + n_S_C + n_E_C + n_I_C
     D[t + 1, ] <- D[t, ] + n_I_D
     R[t + 1, ] <- R[t, ] + n_I_R
     V[t + 1, ] <- V[t, ] + n_S_V

@@ -197,10 +197,14 @@ test_that(
     C <- res[, grep("C_", colnames(res))]
     
     ## expectation: intervention from day 5 to 12
+    ## mass culling takes place on day 5 in patch 1
+    ## 
     expect_true(all(C[1:4, 1] == 0))
-    expect_true(all(C[5:20, 1] == 1010))
+    expect_true(all(C[5:20, 1] == 1020))
     expect_true(all(status[, -1] == 0))
+    expect_equal(res[, "S_1"], rep(c(1000, 0), c(4, 16)))
     expect_equal(res[, "E_1"], rep(c(10, 0), c(4, 16)))
+    expect_equal(res[, "I_1"], rep(c(10, 0), c(4, 16)))
   }
 )
 
