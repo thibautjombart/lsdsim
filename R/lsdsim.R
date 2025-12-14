@@ -65,6 +65,11 @@ lsdsim <- function(grid_size = 1,
   p_S_V <- vacc_coverage * vacc_efficacy
   rate_S_V <- -log(1 - p_S_V)
   
+  if (interv_type == "quarantine") {
+    delta_quarant <- add_quarantine(delta, quarant_efficacy)
+  }
+  delta_ori <- delta # copy of the original delta matrix
+  
   
   for (t in seq_len(time - 1)) {
     
@@ -80,9 +85,9 @@ lsdsim <- function(grid_size = 1,
       rate_into_C <- c(0, rate_cull)[in_response + 1] # culling
     } else { # intervention is quarantine
       rate_into_C <- 0
-      
+      delta <- delta_ori
+      delta[in_response, ] <- delta_quarant[in_response, ]
     }
-    
     
     
     ## individuals leaving S...

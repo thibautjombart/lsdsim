@@ -216,3 +216,43 @@ test_that(
 
 
 
+test_that(
+  "quarantine works as expected", 
+  {
+    ## expectation: 
+    ## infection spreads everywhere, last step is all I
+    res <- lsdsim(grid_size = 3, time = 20, 
+                  ini_S = 1e4,
+                  ini_I = c(1, rep(0, 8)),
+                  interv_delay = 7, # intervention 7 days after 1st case
+                  interv_type = "quarantine",
+                  quarant_efficacy = 0, # no reduction in outwards transmission
+                  sigma = 1e30, # fast E->I
+                  gamma = 0, # no leaving I
+                  beta = 1e30, # super contagious
+                  diffusion = 0.1 # 10% diffusion of infection
+    )
+    
+    I <- res[, grep("I_", colnames(res))]
+    expect_true(all(I[20,] >= 1e4))
+    
+    ## expectation: 
+    ## infection does not spread due to perfect quarantine
+    res <- lsdsim(grid_size = 3, time = 20, 
+                  ini_S = 1e4,
+                  ini_I = c(1, rep(0, 8)),
+                  interv_delay = 2, # intervention 2 days after 1st case
+                  interv_type = "quarantine",
+                  quarant_efficacy = 1, # no reduction in outwards transmission
+                  sigma = 1/14, # E->I in about 14 days
+                  gamma = 1/7, # disease lasts about 7 days
+                  beta = 0.01,
+                  diffusion = 0.01 # 1% diffusion of infection
+    )
+    
+    I <- res[, grep("I_", colnames(res))]
+    
+    
+    }
+)
+
