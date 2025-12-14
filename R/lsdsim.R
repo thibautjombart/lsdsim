@@ -15,6 +15,7 @@ lsdsim <- function(grid_size = 1,
                    interv_delay = 1e30, # how many day after 1st case to start
                    interv_release = 1e30, # how many days after the last case to stop
                    interv_type = c("cull", "quarantine"),
+                   rate_cull = 1e30, # immediate culling once response starts
                    delta = NULL, 
                    diffusion = 0,
                    ini_S = 0,
@@ -80,21 +81,13 @@ lsdsim <- function(grid_size = 1,
     
     rate_S_E <- as.vector(delta %*% (beta * I[t, ]))
     if (interv_type == "cull") {
-      rate_S_C <- c(0, 1e30)[in_response + 1] # culling
-      rate_E_C <- c(0, 1e30)[in_response + 1] # culling
-      rate_I_C <- c(0, 1e30)[in_response + 1] # culling
-      rate_R_C <- c(0, 1e30)[in_response + 1] # culling
-      rate_V_C <- c(0, 1e30)[in_response + 1] # culling
+      rate_into_C <- c(0, rate_cull)[in_response + 1] # culling
     } else {
-      rate_S_C <- 0
-      rate_E_C <- 0
-      rate_I_C <- 0
-      rate_R_C <- 0
-      rate_V_C <- 0
+      rate_into_C <- 0
     }
     
     ## nested binomials are used to decide where individuals leaving S go
-    rate_S_out <- rate_S_E + rate_S_V + rate_S_C
+    rate_S_out <- rate_S_E + rate_S_V + rate_into_C
     p_S_out <- 1 - exp(-rate_S_out)
     n_S_out <- rbinom(n_pop, size = S[t, ], prob = p_S_out)
     
@@ -102,14 +95,14 @@ lsdsim <- function(grid_size = 1,
     S_E_ratio[!is.finite(S_E_ratio)] <- 0
     n_S_E <- rbinom(n_pop, size = n_S_out, prob = S_E_ratio)
     
-    S_V_ratio <- rate_S_V / (rate_S_V + rate_S_C)
+    S_V_ratio <- rate_S_V / (rate_S_V + rate_into_C)
     S_V_ratio[!is.finite(S_V_ratio)] <- 0
     n_S_V <- rbinom(n_pop, size = n_S_out - n_S_E, prob = S_V_ratio)
     n_S_C <- n_S_out - n_S_E - n_S_V
     
     
     ## individuals leaving E
-    rate_E_out <- sigma + rate_E_C
+    rate_E_out <- sigma + rate_into_C
     p_E_out <- 1 - exp(-rate_E_out)
     n_E_out <- rbinom(n_pop, size = E[t, ], prob = p_E_out)
     E_I_ratio <- sigma / rate_E_out
@@ -125,7 +118,7 @@ lsdsim <- function(grid_size = 1,
     ## We first draw individuals going to R or D (i.e. not culled), then draw
     ## disease outcome from the CFR.
   
-    rate_I_out <- gamma + rate_I_C
+    rate_I_out <- gamma + rate_into_C
     p_I_out <- 1 - exp(-rate_I_out)
     n_I_out <- rbinom(n_pop, size = I[t, ], prob = p_I_out)
     I_RD_ratio <- gamma / rate_I_out
@@ -137,10 +130,10 @@ lsdsim <- function(grid_size = 1,
     
     
     ## Recovered individuals can be culled too
-    n_R_C <- rbinom(n_pop, size = R[t, ], prob = 1 - exp(-rate_R_C))
+    n_R_C <- rbinom(n_pop, size = R[t, ], prob = 1 - exp(-rate_into_C))
     
     ## Vaccinated individuals can be culled too
-    n_V_C <- rbinom(n_pop, size = V[t, ], prob = 1 - exp(-rate_V_C))
+    n_V_C <- rbinom(n_pop, size = V[t, ], prob = 1 - exp(-rate_into_C))
     
     ## all changes
     S[t + 1, ] <- S[t, ] - n_S_E - n_S_V - n_S_C
