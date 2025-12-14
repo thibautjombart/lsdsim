@@ -16,6 +16,7 @@ lsdsim <- function(grid_size = 1,
                    interv_release = 1e30, # how many days after the last case to stop
                    interv_type = c("cull", "quarantine"),
                    rate_cull = 1e30, # immediate culling once response starts
+                   quarant_efficacy = 0.9, # 90% outward transmission reduction
                    delta = NULL, 
                    diffusion = 0,
                    ini_S = 0,
@@ -74,19 +75,23 @@ lsdsim <- function(grid_size = 1,
     in_response <- (days_with_cases >= interv_delay) & (days_without_cases <= interv_release)
     status[t + 1, ] <- as.integer(in_response)
     
+    ## response-associated variables
+    if (interv_type == "cull") { # intervention is mass culling
+      rate_into_C <- c(0, rate_cull)[in_response + 1] # culling
+    } else { # intervention is quarantine
+      rate_into_C <- 0
+      
+    }
+    
+    
+    
     ## individuals leaving S...
     ## - to E (new infections)
     ## - to V (vaccination)
     ## (culling will be handled separately)
-    
-    rate_S_E <- as.vector(delta %*% (beta * I[t, ]))
-    if (interv_type == "cull") {
-      rate_into_C <- c(0, rate_cull)[in_response + 1] # culling
-    } else {
-      rate_into_C <- 0
-    }
-    
+      
     ## nested binomials are used to decide where individuals leaving S go
+    rate_S_E <- as.vector(delta %*% (beta * I[t, ]))
     rate_S_out <- rate_S_E + rate_S_V + rate_into_C
     p_S_out <- 1 - exp(-rate_S_out)
     n_S_out <- rbinom(n_pop, size = S[t, ], prob = p_S_out)
