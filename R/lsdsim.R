@@ -13,8 +13,8 @@ lsdsim <- function(grid_size = 1,
                    vacc_coverage = 0,
                    vacc_efficacy = 0.65,
                    interv_delay = 1e30, # how many day after 1st case to start
-                   interv_release = 0, # how many days after the last case to stop
-                   interv_type = 1, #1: mass cull, 2: quarantine
+                   interv_release = 1e30, # how many days after the last case to stop
+                   interv_type = c("cull", "quarantine"),
                    delta = NULL, 
                    diffusion = 0,
                    ini_S = 0,
@@ -29,6 +29,9 @@ lsdsim <- function(grid_size = 1,
   ## handle arguments
   ### recycle arguments as needed
   ### define defaults for NULL values
+  
+  interv_type <- match.arg(interv_type)
+  
   n_pop <- grid_size^2
   ini_S <- rep(ini_S, length.out = n_pop)
   ini_E <- rep(ini_E, length.out = n_pop)
@@ -76,7 +79,7 @@ lsdsim <- function(grid_size = 1,
     ## (culling will be handled separately)
     
     rate_S_E <- as.vector(delta %*% (beta * I[t, ]))
-    if (interv_type == 1L) {
+    if (interv_type == "cull") {
       rate_S_C <- c(0, 1e30)[in_response + 1] # culling
       rate_E_C <- c(0, 1e30)[in_response + 1] # culling
       rate_I_C <- c(0, 1e30)[in_response + 1] # culling
@@ -132,14 +135,21 @@ lsdsim <- function(grid_size = 1,
     n_I_R <- n_I_RD - n_I_D
     n_I_C <- n_I_out - n_I_RD
     
+    
+    ## Recovered individuals can be culled too
+    n_R_C <- rbinom(n_pop, size = R[t, ], prob = 1 - exp(-rate_R_C))
+    
+    ## Vaccinated individuals can be culled too
+    n_V_C <- rbinom(n_pop, size = V[t, ], prob = 1 - exp(-rate_V_C))
+    
     ## all changes
     S[t + 1, ] <- S[t, ] - n_S_E - n_S_V - n_S_C
     E[t + 1, ] <- E[t, ] + n_S_E - n_E_I - n_E_C
     I[t + 1, ] <- I[t, ] + n_E_I - n_I_D - n_I_R - n_I_C
-    C[t + 1, ] <- C[t, ] + n_S_C + n_E_C + n_I_C
+    C[t + 1, ] <- C[t, ] + n_S_C + n_E_C + n_I_C + n_R_C + n_V_C
     D[t + 1, ] <- D[t, ] + n_I_D
-    R[t + 1, ] <- R[t, ] + n_I_R
-    V[t + 1, ] <- V[t, ] + n_S_V
+    R[t + 1, ] <- R[t, ] + n_I_R - n_R_C
+    V[t + 1, ] <- V[t, ] + n_S_V - n_V_C
   }
   
   

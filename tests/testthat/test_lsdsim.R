@@ -148,12 +148,15 @@ test_that(
     res <- lsdsim(time = 20, grid_size = 3, 
                   ini_S = 1e5, 
                   ini_I = c(1, rep(0, 9)),
-                  interv_delay = 14 # response 14 days after 1st case
+                  interv_delay = 14, # response 14 days after 1st case
+                  interv_release = 1e6 # response stays on
     )
     
     status <- res[, grep("status_", colnames(res))]
 
-    ## expectation: about 5% of individuals vaccinated
+    ## expectation: 
+    ## response in patch 1 on day 15, stays on
+    ## no response anywhere else
     expect_equal(status[, 1], rep(0:1, c(14, 6)))
     expect_true(all(status[, -1] == 0))
   }
@@ -186,7 +189,9 @@ test_that(
     res <- lsdsim(time = 20, grid_size = 3, 
                   ini_S = 1000, 
                   ini_E = c(10, rep(0, 8)),
-                  ini_I = c(10, rep(0, 8)),
+                  ini_I = c(8, rep(0, 8)),
+                  ini_R = c(5, rep(0, 8)),
+                  ini_V = c(123, rep(0, 8)),
                   sigma = 0, # no leaving E
                   gamma = 0, # no leaving I
                   beta = 0, # no transmission beyond first case
@@ -200,11 +205,12 @@ test_that(
     ## mass culling takes place on day 5 in patch 1
     ## 
     expect_true(all(C[1:4, 1] == 0))
-    expect_true(all(C[5:20, 1] == 1020))
-    expect_true(all(status[, -1] == 0))
+    expect_true(all(C[5:20, 1] == 1146))
     expect_equal(res[, "S_1"], rep(c(1000, 0), c(4, 16)))
     expect_equal(res[, "E_1"], rep(c(10, 0), c(4, 16)))
-    expect_equal(res[, "I_1"], rep(c(10, 0), c(4, 16)))
+    expect_equal(res[, "I_1"], rep(c(8, 0), c(4, 16)))
+    expect_equal(res[, "R_1"], rep(c(5, 0), c(4, 16)))
+    expect_equal(res[, "V_1"], rep(c(123, 0), c(4, 16)))
   }
 )
 
