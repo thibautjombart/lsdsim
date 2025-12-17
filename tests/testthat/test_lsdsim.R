@@ -230,12 +230,12 @@ test_that(
     res <- lsdsim(grid_size = 3, time = 20, 
                   ini_S = 1e4,
                   ini_I = c(1, rep(0, 8)),
-                  interv_delay = 7, # intervention 7 days after 1st case
+                  interv_delay = 1, # intervention 1 day after 1st case
                   quarantine = TRUE, 
                   quarant_efficacy = 0, # no reduction in outwards transmission
                   sigma = 1e30, # fast E->I
                   gamma = 0, # no leaving I
-                  beta = 1e30, # super contagious
+                  beta = 0.01,
                   diffusion = 0.1 # 10% diffusion of infection
     )
     
@@ -247,7 +247,7 @@ test_that(
     res <- lsdsim(grid_size = 3, time = 20, 
                   ini_S = 1e4,
                   ini_I = c(1, rep(0, 8)),
-                  interv_delay = 2, # intervention 2 days after 1st case
+                  interv_delay = 1, # intervention 1 day after 1st case
                   quarantine = TRUE,
                   quarant_efficacy = 1, # no reduction in outwards transmission
                   sigma = 1/14, # E->I in about 14 days
@@ -257,7 +257,8 @@ test_that(
     )
     
     I <- res[, grep("I_", colnames(res))]
-    
+    expect_true(all(I[, 1] > 0))
+    expect_true(all(I[, -1] == 0))
     
     }
 )
