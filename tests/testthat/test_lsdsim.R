@@ -195,6 +195,7 @@ test_that(
                   sigma = 0, # no leaving E
                   gamma = 0, # no leaving I
                   beta = 0, # no transmission beyond first case
+                  culling = TRUE,
                   interv_delay = 4, # response 4 days after 1st case
                   interv_release = 10 # response stops 10 days after last case
     )
@@ -225,7 +226,7 @@ test_that(
                   ini_S = 1e4,
                   ini_I = c(1, rep(0, 8)),
                   interv_delay = 7, # intervention 7 days after 1st case
-                  interv_type = "quarantine",
+                  quarantine = TRUE, 
                   quarant_efficacy = 0, # no reduction in outwards transmission
                   sigma = 1e30, # fast E->I
                   gamma = 0, # no leaving I
@@ -242,7 +243,7 @@ test_that(
                   ini_S = 1e4,
                   ini_I = c(1, rep(0, 8)),
                   interv_delay = 2, # intervention 2 days after 1st case
-                  interv_type = "quarantine",
+                  quarantine = TRUE,
                   quarant_efficacy = 1, # no reduction in outwards transmission
                   sigma = 1/14, # E->I in about 14 days
                   gamma = 1/7, # disease lasts about 7 days

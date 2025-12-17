@@ -10,13 +10,17 @@ lsdsim <- function(grid_size = 1,
                    sigma = 1/7, # inv. latent period
                    gamma = 1/20, # inv. duration of infection
                    cfr = 0.1, # case fatality ratio
-                   vacc_coverage = 0,
-                   vacc_efficacy = 0.65,
-                   interv_delay = 1e30, # how many day after 1st case to start
-                   interv_release = 1e30, # how many days after the last case to stop
-                   interv_type = c("cull", "quarantine"),
+                   culling = FALSE, # mass culling in affected populations?
+                   vaccination = FALSE, # vaccinate affected population and neighbours?
+                   quarantine = FALSE, # quarantine in affected pop and neighbours?
+                   insecticide = FALSE, # use insecticide in affected pop and neighbours?
                    rate_cull = 1e30, # immediate culling once response starts
+                   vacc_coverage = 0, # prop of individuals getting vaccinated
+                   vacc_efficacy = 0.65, # prop of vaccinated individuals getting protection
                    quarant_efficacy = 0.9, # 90% outward transmission reduction
+                   insect_efficacy = 0.5, # % reduction of transmission due to insecticide
+                   interv_delay = 1e30, # how many day after 1st case to start
+                   interv_release = 28, # how many days after the last case to stop
                    delta = NULL, 
                    diffusion = 0,
                    ini_S = 0,
@@ -31,8 +35,6 @@ lsdsim <- function(grid_size = 1,
   ## handle arguments
   ### recycle arguments as needed
   ### define defaults for NULL values
-  
-  interv_type <- match.arg(interv_type)
   
   n_pop <- grid_size^2
   ini_S <- rep(ini_S, length.out = n_pop)
@@ -62,31 +64,60 @@ lsdsim <- function(grid_size = 1,
   days_without_cases <- rep(0, n_pop)
   in_response <- rep(FALSE, n_pop)
 
-  p_S_V <- vacc_coverage * vacc_efficacy
-  rate_S_V <- -log(1 - p_S_V)
+  rate_vacc <- -log(1 - (vacc_coverage * vacc_efficacy))
   
-  if (interv_type == "quarantine") {
-    delta_quarant <- add_quarantine(delta, quarant_efficacy)
-  }
+  delta_quarant <- add_quarantine(delta, quarant_efficacy)
+  
   delta_ori <- delta # copy of the original delta matrix
-  
+  temp <- delta
+  diag(temp) <- 0
+  list_neighbours <- apply(temp > 0, 1, which) # list of neighbours for each pop
   
   for (t in seq_len(time - 1)) {
     
     ## state monitoring variables
+    ##
+    ## - in_response: logical indicating populations with ongoing outbreak 
+    ##   response
+    ## - id_pop_in_response: indices of populations in response
+    ## - id_pop_in_ring: indices of neighbours to populations in response
     has_cases <- has_cases | (I[t, ] > 0)
     days_with_cases[has_cases] <- days_with_cases[has_cases] + 1
     days_without_cases[I[t, ] == 0] <- days_without_cases[I[t, ] == 0] + 1
     in_response <- (days_with_cases >= interv_delay) & (days_without_cases <= interv_release)
+    id_pop_in_response <- which(in_response)
+    id_pop_in_ring <-  unique(unlist(list_neighbours[in_response]))
+    id_pop_response_and_ring <- unique(c(id_pop_in_response, id_pop_in_ring))
     status[t + 1, ] <- as.integer(in_response)
     
-    ## response-associated variables
-    if (interv_type == "cull") { # intervention is mass culling
-      rate_into_C <- c(0, rate_cull)[in_response + 1] # culling
-    } else { # intervention is quarantine
+    ## response-associated processes
+    ##
+    ## - culling: mass culling of affected population 
+    ## - vaccination: vaccination of affected pop and neighbours
+    ## - quarantine: quarantine of affected pop and neighbours
+    ## - insecticide: insecticide administered in affected pop and neighbours
+    if (culling) {
+      rate_into_C <- rep(0, n_pop)
+      rate_into_C[in_response] <- rate_cull
+    } else {
       rate_into_C <- 0
+    }
+    
+    if (vaccination) {
+      rate_S_V <- rep(0, n_pop)
+      rate_S_V[id_pop_response_and_ring] <- rate_vacc
+    } else {
+      rate_S_V <- 0
+    }
+    
+    if (quarantine) {
       delta <- delta_ori
-      delta[in_response, ] <- delta_quarant[in_response, ]
+      delta[id_pop_response_and_ring, ] <- delta_quarant[id_pop_response_and_ring, ]
+    }
+   
+    if (insecticide) {
+       current_beta <- rep(beta, n_pop)
+       current_beta[id_pop_response_and_ring] <- current_beta[id_pop_response_and_ring] * (1 - insect_efficacy)
     }
     
     
