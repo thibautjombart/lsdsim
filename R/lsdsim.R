@@ -118,6 +118,8 @@ lsdsim <- function(grid_size = 1,
     if (insecticide) {
        current_beta <- rep(beta, n_pop)
        current_beta[id_pop_response_and_ring] <- current_beta[id_pop_response_and_ring] * (1 - insect_efficacy)
+    } else {
+      current_beta <- beta
     }
     
     
@@ -127,7 +129,7 @@ lsdsim <- function(grid_size = 1,
     ## (culling will be handled separately)
       
     ## nested binomials are used to decide where individuals leaving S go
-    rate_S_E <- as.vector(delta %*% (beta * I[t, ]))
+    rate_S_E <- as.vector(delta %*% (current_beta * I[t, ]))
     rate_S_out <- rate_S_E + rate_S_V + rate_into_C
     p_S_out <- 1 - exp(-rate_S_out)
     n_S_out <- rbinom(n_pop, size = S[t, ], prob = p_S_out)

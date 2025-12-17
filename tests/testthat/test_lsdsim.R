@@ -263,3 +263,30 @@ test_that(
     }
 )
 
+
+
+test_that(
+  "insecticide works as expected", 
+  {
+    ## expectation: 
+    ## infection stops because insecticide has perfect efficacy
+    ## only 1 infected in pop 1, no infection elsewhere
+    res <- lsdsim(grid_size = 3, time = 20, 
+                  ini_S = 1e4,
+                  ini_I = c(1, rep(0, 8)),
+                  interv_delay = 1, # intervention 1 day after 1st case
+                  insecticide = TRUE, 
+                  insect_efficacy = 1,
+                  sigma = 1e30, # fast E->I
+                  gamma = 0, # no leaving I
+                  beta = 1,
+                  diffusion = 0.1 # 10% diffusion of infection
+    )
+    
+    I <- res[, grep("I_", colnames(res))]
+    expect_true(all(I[, 1] == 1))
+    expect_true(all(I[, -1] == 0))
+  }
+)
+
+
