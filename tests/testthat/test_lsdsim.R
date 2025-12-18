@@ -1,13 +1,13 @@
 test_that(
   "lsdsim output has the right dimensions", {
     res <- lsdsim()
-    expect_equal(dim(res), c(365, 8))
+    expect_equal(dim(res), c(365, 9))
     
     res <- lsdsim(time = 1)
-    expect_equal(dim(res), c(1, 8))
+    expect_equal(dim(res), c(1, 9))
     
     res <- lsdsim(time = 10, grid_size = 5)
-    expect_equal(dim(res), c(10, 8*5*5))
+    expect_equal(dim(res), c(10, 9*5*5))
   }
 )
 
@@ -17,7 +17,7 @@ test_that(
   "lsdsim output has the right column names", {
     res <- lsdsim(time = 10, grid_size = 2)
     exp_names <- lapply(
-      c("S", "E", "I", "C", "D", "R", "V", "status"), 
+      c("S", "E", "I", "C", "D", "R", "V", "N","status"), 
       paste, 1:4, sep = "_")
     exp_names <- unlist(exp_names)
     expect_equal(colnames(res), exp_names)
@@ -25,11 +25,10 @@ test_that(
 )
 
 
-
 test_that(
-  "no case when no initial infection", {
+  "all compartments are zero", {
     res <- lsdsim(time = 10, grid_size = 2, ini_I = 0)
-    expect_true(all(unlist(res[, 1:28]) == 0))
+    expect_true(all(unlist(res[, 1:32]) == 0))
     expect_true(all(res[, grep("status", names(res))] == "naive"))
   }
 )
@@ -271,7 +270,7 @@ test_that(
                   quarant_efficacy = 0, # no reduction in outwards transmission
                   sigma = 1e30, # fast E->I
                   gamma = 0, # no leaving I
-                  beta = 0.01,
+                  beta = 10,
                   diffusion = 0.1 # 10% diffusion of infection
     )
     
@@ -288,7 +287,7 @@ test_that(
                   quarant_efficacy = 1, # no reduction in outwards transmission
                   sigma = 1/14, # E->I in about 14 days
                   gamma = 1/7, # disease lasts about 7 days
-                  beta = 0.01,
+                  beta = 10,
                   diffusion = 0.01 # 1% diffusion of infection
     )
     

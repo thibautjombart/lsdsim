@@ -48,13 +48,13 @@ lsdsim <- function(grid_size = 1,
   ini_D <- rep(ini_D, length.out = n_pop)
   ini_R <- rep(ini_R, length.out = n_pop)
   ini_V <- rep(ini_V, length.out = n_pop)
-  
+  ini_N <- ini_S + ini_E + ini_I + ini_R + ini_V
   
   ## geographic structure
   xy <- make_grid(grid_size)
   delta <- make_delta(xy, diffusion)
   
-  S <- E <- I <- C <- D <- R <- V <- matrix(0, nrow = time, ncol = n_pop)
+  S <- E <- I <- C <- D <- R <- V <- N <- matrix(0, nrow = time, ncol = n_pop)
   S[1, ] <- ini_S
   E[1, ] <- ini_E
   I[1, ] <- ini_I
@@ -62,6 +62,7 @@ lsdsim <- function(grid_size = 1,
   D[1, ] <- ini_D
   R[1, ] <- ini_R
   V[1, ] <- ini_V
+  N[1, ] <- ini_N
   status <- matrix("naive", nrow = time, ncol = n_pop)
   
   has_cases <- rep(FALSE, n_pop)
@@ -135,7 +136,8 @@ lsdsim <- function(grid_size = 1,
     ## (culling will be handled separately)
       
     ## nested binomials are used to decide where individuals leaving S go
-    rate_S_E <- as.vector(delta %*% (current_beta * I[t, ]))
+    rate_S_E <- as.vector(delta %*% (current_beta * I[t, ] / N[t, ]))
+    rate_S_E[is.na(rate_S_E)] <- 0 # for populations where N = 0
     rate_S_out <- rate_S_E + rate_S_V + rate_into_C
     p_S_out <- 1 - exp(-rate_S_out)
     n_S_out <- rbinom(n_pop, size = S[t, ], prob = p_S_out)
@@ -192,6 +194,7 @@ lsdsim <- function(grid_size = 1,
     D[t + 1, ] <- D[t, ] + n_I_D
     R[t + 1, ] <- R[t, ] + n_I_R - n_R_C
     V[t + 1, ] <- V[t, ] + n_S_V - n_V_C
+    N[t + 1, ] <- S[t + 1, ] + E[t + 1, ] + I[t + 1, ] + R[t + 1, ] + V[t + 1, ]
   }
   
   
@@ -203,8 +206,9 @@ lsdsim <- function(grid_size = 1,
   colnames(D) <- paste("D", seq_len(n_pop), sep = "_")
   colnames(R) <- paste("R", seq_len(n_pop), sep = "_")
   colnames(V) <- paste("V", seq_len(n_pop), sep = "_")
+  colnames(N) <- paste("N", seq_len(n_pop), sep = "_")
   colnames(status) <- paste("status", seq_len(n_pop), sep = "_")
   
-  cbind.data.frame(S, E, I, C, D, R, V, status)
+  cbind.data.frame(S, E, I, C, D, R, V, N, status)
 }
 
