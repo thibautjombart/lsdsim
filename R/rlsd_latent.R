@@ -13,8 +13,10 @@
 #'
 #' @export
 #' @param n the number of values to draw
-#' @param sd the standard deviation of the lognormal distribution
+#' @param mu the population average, defaults to 7 days
+#' @param sd the standard deviation of the lognormal distribution, defaults to 
+#'   0.05
 #' @author Thibaut Jombart \email{thibautjombart@@gmail.com}
-rlsd_latent <- function(n, sd = 0.05) {
-  rlnorm(n, meanlog = log(7), sdlog = 0.05)
+rlsd_latent <- function(n, mu = 7, sd = 0.05) {
+  rlnorm(n, meanlog = log(mu), sdlog = sd)
 }
