@@ -173,6 +173,11 @@ test_that(
     ## - all naive except for time steps 3:5
     ## - patches 1, 5, 8 go into response on time steps 3:5
     ## - patches 2, 6, 9, 4, 7, 12 go into ring on time steps 3:5
+    ##
+    ## To check the spatial structure, use:
+    ##  plot(make_grid(4), pch = "")
+    ##  text(make_grid(4), labels = 1:16, col = ini_I + 1)
+    
     ini_I <- rep(0, 16)
     ini_I[c(1, 5, 8)] <- 1
     res <- lsdsim(time = 10, 
