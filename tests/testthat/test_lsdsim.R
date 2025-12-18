@@ -29,7 +29,8 @@ test_that(
 test_that(
   "no case when no initial infection", {
     res <- lsdsim(time = 10, grid_size = 2, ini_I = 0)
-    expect_true(all(unlist(res) == 0))
+    expect_true(all(unlist(res[, 1:28]) == 0))
+    expect_true(all(res[, grep("status", names(res))] == "naive"))
   }
 )
 
@@ -137,8 +138,8 @@ test_that(
     ## expectation: 
     ## response in patch 1 on day 15, stays on
     ## no response anywhere else
-    expect_equal(status[, 1], rep(0:1, c(14, 6)))
-    expect_true(all(status[, -1] == 0))
+    expect_equal(status[, 1], rep(c("naive", "response"), c(14, 6)))
+    expect_true(all(status[, -1] == "naive"))
   }
 )
 
@@ -157,9 +158,39 @@ test_that(
     status <- res[, grep("status_", colnames(res))]
     
     ## expectation: intervention from day 5 to 12
-    expect_true(all(status[1:4, 1] == 0))
-    expect_true(all(status[5:12, 1] == 1))
-    expect_true(all(status[13:20, 1] == 0))
+    expect_true(all(status[1:4, 1] == "naive"))
+    expect_true(all(status[5:12, 1] == "response"))
+    expect_true(all(status[13:20, 1] == "naive"))
+  }
+)
+
+
+test_that(
+  "status output is correct", 
+  {
+    ## expected result:
+    ##
+    ## - all naive except for time steps 3:5
+    ## - patches 1, 5, 8 go into response on time steps 3:5
+    ## - patches 2, 6, 9, 4, 7, 12 go into ring on time steps 3:5
+    ini_I <- rep(0, 16)
+    ini_I[c(1, 5, 8)] <- 1
+    res <- lsdsim(time = 10, 
+                  grid_size = 4, 
+                  ini_S = 100, 
+                  ini_I = ini_I,
+                  gamma = 1e30, # fast leaving I
+                  beta = 0, # no transmission beyond first case
+                  interv_delay = 2, # response 4 days after 1st case
+                  interv_release = 3, # response stops 10 days after last case)
+                  diffusion = 0.01
+    )
+    status <- res[, grep("status_", colnames(res))]
+    expected_response <- ini_I > 0
+    expected_ring <- c(2, 6, 9, 4, 7, 12)
+    expect_true(all(status[-(3:5), ] == "naive"))
+    expect_true(all(status[3:5, expected_response] == "response"))
+    expect_true(all(status[3:5, expected_ring] == "ring"))
   }
 )
 

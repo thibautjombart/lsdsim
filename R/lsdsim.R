@@ -50,7 +50,7 @@ lsdsim <- function(grid_size = 1,
   xy <- make_grid(grid_size)
   delta <- make_delta(xy, diffusion)
   
-  S <- E <- I <- C <- D <- R <- V <- status <- matrix(0, nrow = time, ncol = n_pop)
+  S <- E <- I <- C <- D <- R <- V <- matrix(0, nrow = time, ncol = n_pop)
   S[1, ] <- ini_S
   E[1, ] <- ini_E
   I[1, ] <- ini_I
@@ -58,6 +58,7 @@ lsdsim <- function(grid_size = 1,
   D[1, ] <- ini_D
   R[1, ] <- ini_R
   V[1, ] <- ini_V
+  status <- matrix("naive", nrow = time, ncol = n_pop)
   
   has_cases <- rep(FALSE, n_pop)
   days_with_cases <- rep(0, n_pop)
@@ -88,7 +89,8 @@ lsdsim <- function(grid_size = 1,
     id_pop_in_response <- which(in_response)
     id_pop_in_ring <-  unique(unlist(list_neighbours[in_response]))
     id_pop_response_and_ring <- unique(c(id_pop_in_response, id_pop_in_ring))
-    status[t + 1, ] <- as.integer(in_response)
+    status[t + 1, id_pop_in_ring] <- "ring"
+    status[t + 1, id_pop_in_response] <- "response"
     
     ## response-associated processes
     ##
