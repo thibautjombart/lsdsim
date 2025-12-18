@@ -6,8 +6,10 @@
 #' in quarantine. Only specific rows of this matrix will then be used during the 
 #' simulation as needed.
 #'
+#' @export
 #' @param delta the connectivity matrix used in [lsdsim]
 #' @param efficacy the relative reduction in outward-going transmission 
+#' @author Thibaut Jombart \email{thibautjombart@@gmail.com}
 #' 
 add_quarantine <- function(delta, efficacy) {
   ## strategy: 

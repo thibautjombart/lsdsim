@@ -4,6 +4,10 @@
 #' arranged on a regular grid of size `grid_size`, and a diffusion process 
 #' defined by a `delta` matrix.
 #'
+#' @author Thibaut Jombart \email{thibautjombart@@gmail.com}
+#' @export
+#' 
+
 lsdsim <- function(grid_size = 1,
                    time = 365,
                    beta = 0.1, # density-dependent infection rate
