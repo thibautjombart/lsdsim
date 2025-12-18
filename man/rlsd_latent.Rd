@@ -9,12 +9,12 @@ transmission of lumpy skin disease virus by biting insects. Transbound
 Emerg Dis. 2019;66: 1873–1883.
 }
 \usage{
-rlsd_latent(n, mu = 7, sd = 0.05)
+rlsd_latent(n, mu = 8.1, sd = 0.05)
 }
 \arguments{
 \item{n}{the number of values to draw}
 
-\item{mu}{the population average, defaults to 7 days}
+\item{mu}{the population average, defaults to 8.1 days}
 
 \item{sd}{the standard deviation of the lognormal distribution, defaults to
 0.05}
@@ -23,9 +23,9 @@ rlsd_latent(n, mu = 7, sd = 0.05)
 This random number generator draws average latent period for LSD using
 literature-driven parameters and log-normal distributions. The latent period
 is defined as the time interval between infection of a cattle, and this
-cattle becoming infectious. Note that the value returned and associated
-variability is a population average, and does not reflect individual-level
-variation.
+cattle becoming infectious. Reported values refer to virus isolation in
+cattle blood. Note that the value returned and associated variability is a
+population average, and does not reflect individual-level variation.
 }
 \author{
 Thibaut Jombart \email{thibautjombart@gmail.com}

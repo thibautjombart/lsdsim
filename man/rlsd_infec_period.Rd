@@ -9,23 +9,24 @@ transmission of lumpy skin disease virus by biting insects. Transbound
 Emerg Dis. 2019;66: 1873–1883.
 }
 \usage{
-rlsd_infec_period(n, mu = 16, sd = 0.1)
+rlsd_infec_period(n, mu = 8.8, sd = 0.05)
 }
 \arguments{
 \item{n}{the number of values to draw}
 
-\item{mu}{the population average, defaults to 16 days}
+\item{mu}{the population average, defaults to 8.8 days}
 
 \item{sd}{the standard deviation of the lognormal distribution, defaults to
-0.1}
+0.05}
 }
 \description{
 This random number generator draws average infectious period for LSD using
 literature-driven parameters and log-normal distributions. The infectious
 period is defined as the time interval between the onset of infectiousness in
-an infected cattle and recovery or death. Note that the value returned and
-associated variability is a population average, and does not reflect
-individual-level variation.
+an infected cattle and recovery or death. Reported values refer to virus
+isolation in cattle blood. Note that the value returned and associated
+variability is a population average, and does not reflect individual-level
+variation.
 }
 \author{
 Thibaut Jombart \email{thibautjombart@gmail.com}
