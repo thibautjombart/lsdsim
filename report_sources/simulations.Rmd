@@ -2,7 +2,7 @@
 title: "A stochastic meta-population model of LSDV epidemics"
 author: "Thibaut Jombart"
 params:
-  recompile: TRUE
+  recompile: FALSE
   n_rep: 200
 output:
   html_document: default
@@ -43,6 +43,7 @@ library(here)
 library(digest)
 library(compiler)
 library(rio)
+library(cowplot)
 devtools::load_all()
 ```
 
@@ -51,7 +52,7 @@ devtools::load_all()
 Our benchmark suggests simulations for 365 days become prohibitively slow for
 grid sizes exceeding 40 (_i.e._, 1600 farms). For the final simulation sets, we 
 aim for 1000 replicates in each setting, so we will use a grid size of 40.
-We assume a diffusion across neighbouring farms of 10%, _i.e._ 10% of 
+We assume a diffusion across neighbouring farms of 1%, _i.e._ 1% of 
 transmission moves to a different farm nearby.
 
 ```{r}
@@ -60,7 +61,7 @@ duration <- 365
 grid_size <- 40
 n_pop <- grid_size^2
 xy <- make_grid(grid_size)
-delta <- make_delta(xy, diffusion = 0.1)
+delta <- make_delta(xy, diffusion = 0.05)
 ```
 
 The size of the farms, in number of herds, is drawn using an average herd size 
@@ -404,6 +405,95 @@ summary(res_all)
 
 qsave(res_all, file.path(output_dir, "summary.qs"))
 rio::export(res_all, file.path(output_dir, "summary.xlsx"))
+
+```
+
+
+
+## Analyses
+
+```{r}
+res_baseline$scenario <- "baseline"
+res_cull_vacc$scenario <- "cull_vacc"
+res_quarant_vacc$scenario <- "quarant_vacc"
+res_all_but_cull$scenario <- "all_but_cull"
+res_all$scenario <- "all"
+
+res <- bind_rows(
+  res_baseline, 
+  res_cull_vacc, 
+  res_quarant_vacc, 
+  res_all_but_cull,
+  res_all
+  ) %>% 
+  select(scenario, everything()) %>% 
+  mutate(
+    p_immun = (R + V) / N,
+    p_dead = (D + C) / (N + D + C)
+  )
+  
+```
+
+```{r}
+label_numbers <- function(x, show_1_as_0 = FALSE) {
+  out <- scales::label_number(scale_cut = scales::cut_long_scale())(x)
+  if (show_1_as_0) {
+    out[out=="1"] <- "0"
+  }
+  out
+}
+
+p_cases <- ggplot(res, aes(x = scenario, y = total_cases)) + 
+  geom_violin(scale = "width") + 
+  scale_y_continuous(
+    transform = "log10", 
+    labels = function(e) label_numbers(e, show_1_as_0 = TRUE)
+  ) + 
+  theme_bw() + 
+  labs(
+    y = "Total cases"
+  )
+
+p_n_pop <- ggplot(res, aes(x = scenario, y = n_pop_ever_infec)) + 
+  geom_violin(scale = "width") + 
+  scale_y_continuous(
+    transform = "log10", 
+    labels = function(e) label_numbers(e, show_1_as_0 = TRUE)
+  ) + 
+  theme_bw() + 
+  labs(
+    y = "Number of herds affected"
+    )
+
+
+p_immun <- ggplot(res, aes(x = scenario, y = p_immun)) + 
+  geom_violin(scale = "width") + 
+  theme_bw() + 
+  labs(
+    y = "Proportion of immunized\ncattles"
+    )
+
+p_dead <- ggplot(res, aes(x = scenario, y = (D+C))) + 
+  geom_violin(scale = "width") + 
+  scale_y_continuous(
+    transform = "log10", 
+    labels = function(e) label_numbers(e, show_1_as_0 = TRUE)
+  ) + 
+  theme_bw() + 
+  labs(
+    y = "Number of dead cattles"
+    )
+
+rotated_x <- theme(
+  axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)
+  )
+
+plot_grid(
+  p_cases + rotated_x, 
+  p_n_pop + rotated_x,
+  p_immun + rotated_x, 
+  p_dead + rotated_x
+)
 
 ```
 
