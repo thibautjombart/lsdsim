@@ -59,11 +59,12 @@ lsdsim <- function(grid_size = 1,
     stopifnot(nrow(delta) == n_pop)
   }
   
-  
-  S <- E <- I <- C <- D <- R <- V <- N <- matrix(0, nrow = time, ncol = n_pop)
+  ## note: new_I will be used to track the incidence of new cases
+  S <- E <- I <- new_I <- C <- D <- R <- V <- N <- 
+    matrix(0, nrow = time, ncol = n_pop)
   S[1, ] <- ini_S
   E[1, ] <- ini_E
-  I[1, ] <- ini_I
+  I[1, ] <- new_I[1, ] <- ini_I
   C[1, ] <- ini_C
   D[1, ] <- ini_D
   R[1, ] <- ini_R
@@ -201,6 +202,7 @@ lsdsim <- function(grid_size = 1,
     R[t + 1, ] <- R[t, ] + n_I_R - n_R_C
     V[t + 1, ] <- V[t, ] + n_S_V - n_V_C
     N[t + 1, ] <- S[t + 1, ] + E[t + 1, ] + I[t + 1, ] + R[t + 1, ] + V[t + 1, ]
+    new_I[t + 1, ] <- n_E_I
   }
   
   
@@ -213,9 +215,10 @@ lsdsim <- function(grid_size = 1,
   colnames(R) <- paste("R", seq_len(n_pop), sep = "_")
   colnames(V) <- paste("V", seq_len(n_pop), sep = "_")
   colnames(N) <- paste("N", seq_len(n_pop), sep = "_")
+  colnames(new_I) <- paste("new_I", seq_len(n_pop), sep = "_")
   colnames(status) <- paste("status", seq_len(n_pop), sep = "_")
   
-  out <- cbind.data.frame(S, E, I, C, D, R, V, N, status)
+  out <- cbind.data.frame(S, E, I, C, D, R, V, N, new_I, status)
   class(out) <- c("lsdsim", class(out))
   out
 }

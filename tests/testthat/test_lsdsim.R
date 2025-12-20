@@ -1,13 +1,13 @@
 test_that(
   "lsdsim output has the right dimensions", {
     res <- lsdsim()
-    expect_equal(dim(res), c(365, 9))
+    expect_equal(dim(res), c(365, 10))
     
     res <- lsdsim(time = 1)
-    expect_equal(dim(res), c(1, 9))
+    expect_equal(dim(res), c(1, 10))
     
     res <- lsdsim(time = 10, grid_size = 5)
-    expect_equal(dim(res), c(10, 9*5*5))
+    expect_equal(dim(res), c(10, 10*5*5))
   }
 )
 
@@ -17,7 +17,7 @@ test_that(
   "lsdsim output has the right column names", {
     res <- lsdsim(time = 10, grid_size = 2)
     exp_names <- lapply(
-      c("S", "E", "I", "C", "D", "R", "V", "N","status"), 
+      c("S", "E", "I", "C", "D", "R", "V", "N", "new_I","status"), 
       paste, 1:4, sep = "_")
     exp_names <- unlist(exp_names)
     expect_equal(colnames(res), exp_names)
@@ -28,7 +28,7 @@ test_that(
 test_that(
   "all compartments are zero", {
     res <- lsdsim(time = 10, grid_size = 2, ini_I = 0)
-    expect_true(all(unlist(res[, 1:32]) == 0))
+    expect_true(all(unlist(res[, 1:36]) == 0))
     expect_true(all(res[, grep("status", names(res))] == "naive"))
   }
 )
@@ -58,8 +58,8 @@ test_that(
                   sigma = 1e30, # super fast E->I
                   gamma = 0 # no leaving I
     )
-    E <- res[, grep("E_", colnames(res))]
-    I <- res[, grep("I_", colnames(res))]
+    E <- res[, grep("^E_", colnames(res))]
+    I <- res[, grep("^I_", colnames(res))]
     
     expect_true(all(E[2,] == 5000))
     expect_true(all(E[-2,] == 0))
@@ -77,7 +77,7 @@ test_that(
                   sigma = 1e30, # super fast E->I
                   gamma = 0 # no leaving I
     )
-    I <- res[, grep("I_", colnames(res))]
+    I <- res[, grep("^I_", colnames(res))]
  
     expect_true(all(I[3:10, 1] == 5001))
     expect_true(all(I[, -1] == 0))
@@ -95,7 +95,7 @@ test_that(
                   gamma = 0, # no leaving I
                   diffusion = 0.1 # 10% diffusion
     )
-    I <- res[, grep("I_", colnames(res))]
+    I <- res[, grep("^I_", colnames(res))]
    
     expect_true(all(I[10, ] >= 5000))
     
@@ -274,7 +274,7 @@ test_that(
                   diffusion = 0.1 # 10% diffusion of infection
     )
     
-    I <- res[, grep("I_", colnames(res))]
+    I <- res[, grep("^I_", colnames(res))]
     expect_true(all(I[20,] >= 1e4))
     
     ## expectation: 
@@ -291,7 +291,7 @@ test_that(
                   diffusion = 0.01 # 1% diffusion of infection
     )
     
-    I <- res[, grep("I_", colnames(res))]
+    I <- res[, grep("^I_", colnames(res))]
     expect_true(all(I[, 1] > 0))
     expect_true(all(I[, -1] == 0))
     
@@ -318,7 +318,7 @@ test_that(
                   diffusion = 0.1 # 10% diffusion of infection
     )
     
-    I <- res[, grep("I_", colnames(res))]
+    I <- res[, grep("^I_", colnames(res))]
     expect_true(all(I[, 1] == 1))
     expect_true(all(I[, -1] == 0))
   }
