@@ -3,7 +3,7 @@ title: "A stochastic meta-population model of LSDV epidemics"
 author: "Thibaut Jombart"
 params:
   recompile: TRUE
-  n_rep: 10
+  n_rep: 200
 output:
   html_document: default
 ---
@@ -51,8 +51,8 @@ devtools::load_all()
 Our benchmark suggests simulations for 365 days become prohibitively slow for
 grid sizes exceeding 40 (_i.e._, 1600 farms). For the final simulation sets, we 
 aim for 1000 replicates in each setting, so we will use a grid size of 40.
-We assume a diffusion across neighbouring farms of 1%, _i.e._ 1% of transmission 
-moves to a different farm nearby.
+We assume a diffusion across neighbouring farms of 10%, _i.e._ 10% of 
+transmission moves to a different farm nearby.
 
 ```{r}
 n_rep <- params$n_rep
@@ -60,7 +60,7 @@ duration <- 365
 grid_size <- 40
 n_pop <- grid_size^2
 xy <- make_grid(grid_size)
-delta <- make_delta(xy, diffusion = 0.01)
+delta <- make_delta(xy, diffusion = 0.1)
 ```
 
 The size of the farms, in number of herds, is drawn using an average herd size 
