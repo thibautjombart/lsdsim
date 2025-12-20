@@ -53,5 +53,8 @@ summary.lsdsim <- function(object) {
     n_response = n_response,
     n_ring = n_ring
   )
+  out$total_naive <- sum(n_naive)
+  out$total_response <- sum(n_response)
+  out$total_ring <- sum(n_ring)
   out
 }
