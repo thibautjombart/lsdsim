@@ -93,7 +93,7 @@ We set the number of replicates, which will apply to each simulation scenario.
 We also make a compiled version of `lsdsim` and set up parallelisation.
 
 ```{r}
-n_rep <- 1e3
+n_rep <- 5
 fast_lsdsim <- compiler::cmpfun(lsdsim)
 
 ```
@@ -109,37 +109,26 @@ r_ini_case <- function(n_pop) {
 ```
 
 Input parameters will be the same for different interventions:
-```{r}
-input_params <- rlsd_param(n_rep)
-head(input_params)
-```
 
-Populations are drawn in advance as well, so the same populations will be used
-in the different scenarios:
-```{r}
+```{r cache = !params$recompile}
+lsd_params <- rlsd_param(n_rep)
+head(lsd_params)
+
 list_herd_size <- lapply(1:n_rep, function(i) r_herd_size(n_pop))
-```
-
-Initial infections are also drawn in advance and will be common to all simulations:
-```{r}
 list_ini_cases <- lapply(1:n_rep, function(i) r_ini_case(n_pop))
-```
 
-We put all simulation inputs into a single `tibble`:
-```{r}
 inputs <- tibble(
-  input_params, 
+  lsd_params, 
   ini_S = list_herd_size,
   ini_I = list_ini_cases
 )
 
 inputs$label <- apply(inputs, 1, function(e) substr(digest(e), 1, 8))
-
 ```
 
 
 
-## Baseline scenario: no response
+### Baseline scenario: no response
 
 In these simulations, we use no response.
 
@@ -186,5 +175,233 @@ summary(res_baseline)
 qsave(res_baseline, file.path(output_dir, "summary.qs"))
 
 ```
+
+
+
+
+### cull_vacc scenario: mass culling and ring vaccination
+
+In these simulations, we use mass culling of the affected herds, and 
+ring vaccination.
+
+```{r cull_vacc, cache = !params$recompile}
+output_dir <- here::here("outputs", "simulations", "cull_vacc", Sys.Date())
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
+
+res_cull_vacc <- vector(mode = "list", length = n_rep)
+for (i in seq_len(n_rep)) {
+  ## run simulation
+  current_sim <- fast_lsdsim(
+    grid_size = grid_size, 
+    time = duration,
+    ini_S = unlist(inputs$ini_S[[i]]), 
+    ini_I = unlist(inputs$ini_I[[i]]),
+    delta = delta,
+    beta = inputs$beta[i],
+    sigma = inputs$sigma[i],
+    gamma = inputs$gamma[i],
+    cfr = inputs$cfr[i],
+    quarantine = FALSE,
+    vaccination = TRUE, 
+    culling = TRUE, 
+    insecticide = FALSE,
+    interv_delay = 7,
+    interv_release = 28,
+    vacc_coverage = 1, 
+    vacc_efficacy = 0.65,
+    rate_cull = 0.5
+  )
+  
+  ## save full simulation to file
+  out_file <- file.path(
+    output_dir, 
+    paste0(inputs$label[i], "_cull_vacc", ".qs")
+  )
+  qsave(current_sim, out_file)
+  
+  ## store summary
+  res_cull_vacc[[i]] <- summary(current_sim)[duration, ]
+}
+
+res_cull_vacc <- cbind(label = inputs$label, bind_rows(res_cull_vacc))
+head(res_cull_vacc)
+summary(res_cull_vacc)
+
+qsave(res_cull_vacc, file.path(output_dir, "summary.qs"))
+
+```
+
+
+
+### Quarant_vacc scenario: quarantine and ring vaccination
+
+In these simulations, we use quarantine of infected herds and ring vaccination.
+
+```{r quarant_vacc, cache = !params$recompile}
+output_dir <- here::here("outputs", "simulations", "quarant_vacc", Sys.Date())
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
+
+res_quarant_vacc <- vector(mode = "list", length = n_rep)
+for (i in seq_len(n_rep)) {
+  ## run simulation
+  current_sim <- fast_lsdsim(
+    grid_size = grid_size, 
+    time = duration,
+    ini_S = unlist(inputs$ini_S[[i]]), 
+    ini_I = unlist(inputs$ini_I[[i]]),
+    delta = delta,
+    beta = inputs$beta[i],
+    sigma = inputs$sigma[i],
+    gamma = inputs$gamma[i],
+    cfr = inputs$cfr[i],
+    quarantine = TRUE,
+    vaccination = TRUE, 
+    culling = FALSE, 
+    insecticide = FALSE,
+    interv_delay = 7,
+    interv_release = 28,
+    vacc_coverage = 1, 
+    vacc_efficacy = 0.65,
+    quarant_efficacy = 0.9
+  )
+  
+  ## save full simulation to file
+  out_file <- file.path(
+    output_dir, 
+    paste0(inputs$label[i], "_quarant_vacc", ".qs")
+  )
+  qsave(current_sim, out_file)
+  
+  ## store summary
+  res_quarant_vacc[[i]] <- summary(current_sim)[duration, ]
+}
+
+res_quarant_vacc <- cbind(label = inputs$label, bind_rows(res_quarant_vacc))
+head(res_quarant_vacc)
+summary(res_quarant_vacc)
+
+qsave(res_quarant_vacc, file.path(output_dir, "summary.qs"))
+
+```
+
+
+### all_but_cull scenario: quarantine, ring vaccination, insecticide
+
+In these simulations, we use quarantine of infected herds, ring vaccination,
+and insecticide spray.
+
+```{r all_but_cull, cache = !params$recompile}
+output_dir <- here::here("outputs", "simulations", "all_but_cull", Sys.Date())
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
+
+res_all_but_cull <- vector(mode = "list", length = n_rep)
+for (i in seq_len(n_rep)) {
+  ## run simulation
+  current_sim <- fast_lsdsim(
+    grid_size = grid_size, 
+    time = duration,
+    ini_S = unlist(inputs$ini_S[[i]]), 
+    ini_I = unlist(inputs$ini_I[[i]]),
+    delta = delta,
+    beta = inputs$beta[i],
+    sigma = inputs$sigma[i],
+    gamma = inputs$gamma[i],
+    cfr = inputs$cfr[i],
+    quarantine = TRUE,
+    vaccination = TRUE, 
+    culling = FALSE, 
+    insecticide = TRUE,
+    interv_delay = 7,
+    interv_release = 28,
+    vacc_coverage = 1, 
+    vacc_efficacy = 0.65,
+    quarant_efficacy = 0.9, 
+    insect_efficacy = 0.5
+  )
+  
+  ## save full simulation to file
+  out_file <- file.path(
+    output_dir, 
+    paste0(inputs$label[i], "_all_but_cull", ".qs")
+  )
+  qsave(current_sim, out_file)
+  
+  ## store summary
+  res_all_but_cull[[i]] <- summary(current_sim)[duration, ]
+}
+
+res_all_but_cull <- cbind(label = inputs$label, bind_rows(res_all_but_cull))
+head(res_all_but_cull)
+summary(res_all_but_cull)
+
+qsave(res_all_but_cull, file.path(output_dir, "summary.qs"))
+
+```
+
+
+### all scenario: culling, quarantine, ring vaccination, insecticide
+
+In these simulations, we use mass culling, ring quarantine and vaccination, and insecticide spray.
+
+```{r all, cache = !params$recompile}
+output_dir <- here::here("outputs", "simulations", "all", Sys.Date())
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
+
+res_all <- vector(mode = "list", length = n_rep)
+for (i in seq_len(n_rep)) {
+  ## run simulation
+  current_sim <- fast_lsdsim(
+    grid_size = grid_size, 
+    time = duration,
+    ini_S = unlist(inputs$ini_S[[i]]), 
+    ini_I = unlist(inputs$ini_I[[i]]),
+    delta = delta,
+    beta = inputs$beta[i],
+    sigma = inputs$sigma[i],
+    gamma = inputs$gamma[i],
+    cfr = inputs$cfr[i],
+    quarantine = TRUE,
+    vaccination = TRUE, 
+    culling = TRUE, 
+    insecticide = TRUE,
+    interv_delay = 7,
+    interv_release = 28,
+    vacc_coverage = 1, 
+    vacc_efficacy = 0.65,
+    rate_cull = 0.5,
+    quarant_efficacy = 0.9, 
+    insect_efficacy = 0.5
+  )
+  
+  ## save full simulation to file
+  out_file <- file.path(
+    output_dir, 
+    paste0(inputs$label[i], "_all", ".qs")
+  )
+  qsave(current_sim, out_file)
+  
+  ## store summary
+  res_all[[i]] <- summary(current_sim)[duration, ]
+}
+
+res_all <- cbind(label = inputs$label, bind_rows(res_all))
+head(res_all)
+summary(res_all)
+
+qsave(res_all, file.path(output_dir, "summary.qs"))
+
+```
+
+
+
+
 
 
