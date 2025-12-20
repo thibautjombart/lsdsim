@@ -52,7 +52,13 @@ lsdsim <- function(grid_size = 1,
   
   ## geographic structure
   xy <- make_grid(grid_size)
-  delta <- make_delta(xy, diffusion)
+  if (is.null(delta)) {
+    delta <- make_delta(xy, diffusion)
+  } else {
+    stopifnot(nrow(delta) == ncol(delta))
+    stopifnot(nrow(delta) == n_pop)
+  }
+  
   
   S <- E <- I <- C <- D <- R <- V <- N <- matrix(0, nrow = time, ncol = n_pop)
   S[1, ] <- ini_S
