@@ -12,19 +12,16 @@ summary.lsdsim <- function(object) {
   n_steps <- nrow(x)
   
   ## sum compartments over all populations
-  comps <- c("S", "E", "I", "D", "C", "R", "V", "N")
+  comps <- c("S", "E", "I", "D", "C", "R", "V", "N", "new_I")
   comp_sums <- list()
   for(e in comps) {
-    to_keep <- grep(sprintf("^[%s]", e), colnames(x))
+    to_keep <- grep(sprintf("^%s", e), colnames(x))
     comp_sums[[e]] <- rowSums(x[, to_keep])
   }
   
-  ## total cases: including E, I, D, R
+  ## total cases: cumulative incidence
   ## AR is total cases / population size
-  total_cases <- comp_sums[["E"]] + 
-    comp_sums[["I"]] + 
-    comp_sums[["D"]] + 
-    comp_sums[["R"]]
+  total_cases <- cumsum(comp_sums[["new_I"]])
   ar <- total_cases / comp_sums[["N"]]
   ar[comp_sums[["N"]] == 0] <- 0
   
