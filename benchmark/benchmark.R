@@ -18,6 +18,7 @@
 # 1. evaluate scaling with time
 # 2. evaluate scaling of the algorithm for increasing number of populations
 # 3. compare "no intervention" vs "full interventions"
+# 4. compare compiled version to normal implementation
 
 devtools::load_all()
 
@@ -74,3 +75,33 @@ dotchart(
   ylab = "Simulation (red = intervention)",
   col = interv_vec + 1
 )
+
+
+# 4. compiled version vs normal implementation
+lsdsim_compiled <- compiler::cmpfun(lsdsim)
+compiled_vec <- rep(c(FALSE, TRUE), each = 20)
+vec_fun <- c(lsdsim, lsdsim_compiled)[compiled_vec + 1]
+exp_4_time <- lapply(
+  vec_fun, 
+  function(f) system.time(
+    f(grid_size = 10, time = 365)
+  )
+)
+exp_4_res <- cbind.data.frame(compiled = compiled_vec, Reduce(rbind, exp_4_time))
+dotchart(
+  exp_4_res$elapse, pch = 20, 
+  main = "lsddim: scaling with/without compilation", 
+  xlab = "Runtime (s)",
+  ylab = "Simulation (red = compiled code)",
+  col = compiled_vec + 1
+)
+
+
+
+# Further analyses
+# ----------------
+#
+# Here we try and pick the optimal grid size for an outbreak duration of 
+# 365 days, and find a compromise between grid size and the number of replicates 
+# we will be able to run.
+
