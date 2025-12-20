@@ -2,7 +2,7 @@
 title: "A stochastic meta-population model of LSDV epidemics"
 author: "Thibaut Jombart"
 params:
-  recompile: TRUE
+  recompile: FALSE
 output:
   html_document: default
 ---
@@ -14,8 +14,7 @@ knitr::opts_chunk$set(
   collapse = TRUE, 
   fig.width = 8, 
   fig.height = 6, 
-  dpi = 70, 
-  cache = params$recompile
+  dpi = 70
   )
 ```
 
@@ -39,7 +38,8 @@ We load required libraries:
 library(tidyverse)
 library(viridis)
 library(qs)
-#library(here)
+library(here)
+library(digest)
 library(compiler)
 devtools::load_all()
 ```
@@ -53,6 +53,7 @@ We assume a diffusion across neighbouring farms of 1%, _i.e._ 1% of transmission
 moves to a different farm nearby.
 
 ```{r}
+duration <- 365
 grid_size <- 40
 n_pop <- grid_size^2
 xy <- make_grid(grid_size)
@@ -62,8 +63,6 @@ delta <- make_delta(xy, diffusion = 0.01)
 The size of the farms, in number of herds, is drawn using an average herd size 
 of 50, exponentially distributed with a minimum at 20 individuals:
 ```{r}
-set.seed(1)
-#herd_size <- round(rgamma(nrow(xy), shape = 18, scale = 50/18))
 r_herd_size <- function(n) {
   20 + round(rexp(nrow(xy), 1/30))
 }
@@ -94,7 +93,7 @@ We set the number of replicates, which will apply to each simulation scenario.
 We also make a compiled version of `lsdsim` and set up parallelisation.
 
 ```{r}
-n_rep <- 10
+n_rep <- 1e3
 fast_lsdsim <- compiler::cmpfun(lsdsim)
 
 ```
@@ -126,6 +125,17 @@ Initial infections are also drawn in advance and will be common to all simulatio
 list_ini_cases <- lapply(1:n_rep, function(i) r_ini_case(n_pop))
 ```
 
+We put all simulation inputs into a single `tibble`:
+```{r}
+inputs <- tibble(
+  input_params, 
+  ini_S = list_herd_size,
+  ini_I = list_ini_cases
+)
+
+inputs$label <- apply(inputs, 1, function(e) substr(digest(e), 1, 8))
+
+```
 
 
 
@@ -133,100 +143,48 @@ list_ini_cases <- lapply(1:n_rep, function(i) r_ini_case(n_pop))
 
 In these simulations, we use no response.
 
-```{r}
+```{r baseline, cache = !params$recompile}
+output_dir <- here::here("outputs", "simulations", "baseline", Sys.Date())
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
 
-output_dir <- here::here("outputs", "simulations", "baseline")
-dir.create(output_dir, recursive = TRUE)
-
+res_baseline <- vector(mode = "list", length = n_rep)
 for (i in seq_len(n_rep)) {
   ## run simulation
   current_sim <- fast_lsdsim(
     grid_size = grid_size, 
-    ini_S = list_herd_size[[i]], 
-    ini_I = list_ini_cases[[i]],
+    time = duration,
+    ini_S = unlist(inputs$ini_S[[i]]), 
+    ini_I = unlist(inputs$ini_I[[i]]),
     delta = delta,
-    beta = input_params[i, "beta"],
-    sigma = input_params[i, "sigma"],
-    gamma = input_params[i, "gamma"],
+    beta = inputs$beta[i],
+    sigma = inputs$sigma[i],
+    gamma = inputs$gamma[i],
+    cfr = inputs$cfr[i],
     quarantine = FALSE,
     vaccination = FALSE, 
     culling = FALSE, 
-    insecticide = FALSE, 
-    cfr = 0.03 # CFR reportedly 1-5%
+    insecticide = FALSE
   )
   
   ## save full simulation to file
-  out_file <- file.path(output_dir, paste0("sim_", i, ".rds"))
+  out_file <- file.path(
+    output_dir, 
+    paste0(inputs$label[i], "_baseline", ".qs")
+  )
   qsave(current_sim, out_file)
   
   ## store summary
-  
+  res_baseline[[i]] <- summary(current_sim)[duration, ]
 }
 
-```
+res_baseline <- cbind(label = inputs$label, bind_rows(res_baseline))
+head(res_baseline)
+summary(res_baseline)
 
-
-## Impact of mass culling
-
-Here we simulate outbreaks aiming to replicate the current setting:
-
-
-## Visualising results
-
-### Time series
-
-Here we first sum compartments across all patches, and visualize the results as a time series:
-
-```{r}
-comps <- c("V", "E", "I", "F", "D", "C", "R")
-res_smry <- list()
-for(e in comps) {
-  to_keep <- grep(sprintf("^[%s]", e), colnames(res))
-  res_smry[[e]] <- rowSums(res[, to_keep])
-}
-res_smry <- cbind(time = 1:365, data.frame(res_smry))
-head(res_smry)
-
-res_smry %>%
-  pivot_longer(-1, names_to = "Compartment", values_to = "n") %>% 
-  ggplot(aes(x = time, y = n, color = Compartment)) + 
-  geom_line(size = 1) + 
-  theme_bw() +
-  labs(
-    x = "Time",
-    y = "Number of individuals", 
-    title = "Overall dynamics"
-    ) + 
-  scale_x_continuous(n.breaks = 10) + 
-  scale_y_continuous(n.breaks = 10) +
-  theme(legend.position = "bottom")
-```
-
-
-### Mapping total cases
-
-Here we first isolate all compartments corresponding to infections, and calculate total cases for every patch at the end of the simulation. Then we map the results:
-
-```{r fig.width = 5, fig.height = 5}
-to_keep <- c(grep("^[EIDFRC]", colnames(res)))
-temp <- res[res[, "step"] == 365, to_keep, drop = TRUE]
-patch_id <- as.integer(gsub("[^[:digit:]]", "", names(temp)))
-total_cases <- tapply(temp, patch_id, sum)
-
-df <- cbind(patches, total_cases)
-
-ggplot(df, aes(x = x, y = y)) + 
-  geom_tile(aes(fill = total_cases)) + 
-  scale_fill_viridis_c(
-    option = "magma", 
-    na.value = "transparent", 
-    n.breaks = 7) + 
-  labs(x = "Longitude", 
-       y = "Latitude", 
-       fill = "Total cases") + 
-  scale_x_continuous(n.breaks = 10) + 
-  scale_y_continuous(n.breaks = 10) + 
-  theme(legend.position = "bottom")
+qsave(res_baseline, file.path(output_dir, "summary.qs"))
 
 ```
+
 
