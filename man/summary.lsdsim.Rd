@@ -11,5 +11,6 @@
 }
 \description{
 This function sums compartments across all populations in a \link{lsdsim} object,
-for each time step.
+for each time step. It also reports the number of patches in 'naive',
+'response' and 'ring' state at every time step.
 }
