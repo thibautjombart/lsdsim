@@ -21,8 +21,8 @@
 #' @param n the number of values to draw
 #' @param mu the population average, defaults to 3% mortality
 #' @param sd the standard deviation of the lognormal distribution, defaults to
-#'   0.3
+#'   0.2
 #' @author Thibaut Jombart \email{thibautjombart@@gmail.com}
-rlsd_cfr <- function(n, mu = 3, sd = 0.3) {
+rlsd_cfr <- function(n, mu = 0.03, sd = 0.2) {
   rlnorm(n, meanlog = log(mu), sdlog = sd)
 }
