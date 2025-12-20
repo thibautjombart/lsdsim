@@ -2,7 +2,8 @@
 title: "A stochastic meta-population model of LSDV epidemics"
 author: "Thibaut Jombart"
 params:
-  recompile: FALSE
+  recompile: TRUE
+  n_rep: 10
 output:
   html_document: default
 ---
@@ -41,6 +42,7 @@ library(qs)
 library(here)
 library(digest)
 library(compiler)
+library(rio)
 devtools::load_all()
 ```
 
@@ -93,7 +95,7 @@ We set the number of replicates, which will apply to each simulation scenario.
 We also make a compiled version of `lsdsim` and set up parallelisation.
 
 ```{r}
-n_rep <- 5
+n_rep <- params$all
 fast_lsdsim <- compiler::cmpfun(lsdsim)
 
 ```
@@ -173,6 +175,7 @@ head(res_baseline)
 summary(res_baseline)
 
 qsave(res_baseline, file.path(output_dir, "summary.qs"))
+rio::export(res_baseline, file.path(output_dir, "summary.xlsx"))
 
 ```
 
@@ -230,6 +233,7 @@ head(res_cull_vacc)
 summary(res_cull_vacc)
 
 qsave(res_cull_vacc, file.path(output_dir, "summary.qs"))
+rio::export(res_cull_vacc, file.path(output_dir, "summary.xlsx"))
 
 ```
 
@@ -285,6 +289,7 @@ head(res_quarant_vacc)
 summary(res_quarant_vacc)
 
 qsave(res_quarant_vacc, file.path(output_dir, "summary.qs"))
+rio::export(res_quarant_vacc, file.path(output_dir, "summary.xlsx"))
 
 ```
 
@@ -341,6 +346,7 @@ head(res_all_but_cull)
 summary(res_all_but_cull)
 
 qsave(res_all_but_cull, file.path(output_dir, "summary.qs"))
+rio::export(res_all_but_cull, file.path(output_dir, "summary.xlsx"))
 
 ```
 
@@ -397,6 +403,7 @@ head(res_all)
 summary(res_all)
 
 qsave(res_all, file.path(output_dir, "summary.qs"))
+rio::export(res_all, file.path(output_dir, "summary.xlsx"))
 
 ```
 
