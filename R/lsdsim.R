@@ -215,6 +215,8 @@ lsdsim <- function(grid_size = 1,
   colnames(N) <- paste("N", seq_len(n_pop), sep = "_")
   colnames(status) <- paste("status", seq_len(n_pop), sep = "_")
   
-  cbind.data.frame(S, E, I, C, D, R, V, N, status)
+  out <- cbind.data.frame(S, E, I, C, D, R, V, N, status)
+  class(out) <- c("lsdsim", class(out))
+  out
 }
 
