@@ -267,7 +267,8 @@ test_that(
                   ini_I = c(1, rep(0, 8)),
                   interv_delay = 1, # intervention 1 day after 1st case
                   quarantine = TRUE, 
-                  quarant_efficacy = 0, # no reduction in outwards transmission
+                  quarant_efficacy_in = 0, # no effect of quarantine isinde farm
+                  quarant_efficacy_out = 0, # no reduction in outwards transmission
                   sigma = 1e30, # fast E->I
                   gamma = 0, # no leaving I
                   beta = 10,
@@ -278,13 +279,14 @@ test_that(
     expect_true(all(I[20,] >= 1e4))
     
     ## expectation: 
-    ## infection does not spread due to perfect quarantine
+    ## infection does not spread due to quarantine stopping all outwards 
+    ## transmissions
     res <- lsdsim(grid_size = 3, time = 20, 
                   ini_S = 1e4,
                   ini_I = c(1, rep(0, 8)),
                   interv_delay = 1, # intervention 1 day after 1st case
                   quarantine = TRUE,
-                  quarant_efficacy = 1, # no reduction in outwards transmission
+                  quarant_efficacy_out = 1, # no outwards transmission
                   sigma = 1/14, # E->I in about 14 days
                   gamma = 1/7, # disease lasts about 7 days
                   beta = 10,
@@ -293,6 +295,28 @@ test_that(
     
     I <- res[, grep("^I_", colnames(res))]
     expect_true(all(I[, 1] > 0))
+    expect_true(all(I[, -1] == 0))
+    
+    
+    
+    ## expectation: 
+    ## infection does not spread due to quarantine stopping all transmissions
+    ## inside the farms; patch 1 stays at 1 case
+    res <- lsdsim(grid_size = 3, time = 20, 
+                  ini_S = 1e4,
+                  ini_I = c(1, rep(0, 8)),
+                  interv_delay = 1, # intervention 1 day after 1st case
+                  quarantine = TRUE,
+                  quarant_efficacy_in = 1, # no outwards transmission
+                  quarant_efficacy_out = 0, # no outwards transmission
+                  sigma = 1/14, # E->I in about 14 days
+                  gamma = 0, # no leaving I
+                  beta = 10,
+                  diffusion = 0.01 # 1% diffusion of infection
+    )
+    
+    I <- res[, grep("^I_", colnames(res))]
+    expect_equal(I[, 1], rep(1, 20))
     expect_true(all(I[, -1] == 0))
     
     }

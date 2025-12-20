@@ -8,18 +8,21 @@
 #'
 #' @export
 #' @param delta the connectivity matrix used in [lsdsim]
-#' @param efficacy the relative reduction in outward-going transmission 
+#' @param efficacy_in the relative reduction in transmission within herds 
+#' @param efficacy_out the relative reduction in outward-going transmission 
 #' @author Thibaut Jombart \email{thibautjombart@@gmail.com}
 #' 
-add_quarantine <- function(delta, efficacy) {
-  ## strategy: 
-  ## - we isolate non-diagonal terms
-  ## - we reduce them by a relative fraction equal to the efficacy
-  ## - we find new diagonal terms to ensure row-standardisation
+add_quarantine <- function(delta, efficacy_in, efficacy_out) {
+  ## strategy:
+  ## - we reduce all terms by a relative fraction equal to efficacy_out
+  ## - we restore the diagonal terms of the original matrix, and reduce them by 
+  ##   a relative fraction equal to efficacy_in
+  ## 
+  ## note that the resulting matrix is no longer row-standardized, but this is
+  ## fine, we do want quarantine to reduce transmission, not merely impact where
+  ## new cases go
   out <- delta
-  diag(out) <- 0
-  out <- out * (1 - efficacy)
-  new_diag <- 1 - rowSums(out)
-  diag(out) <- new_diag
+  out <- out * (1 - efficacy_out)
+  diag(out) <- diag(delta) * (1 - efficacy_in)
   out
 }

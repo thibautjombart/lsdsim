@@ -21,7 +21,8 @@ lsdsim <- function(grid_size = 1,
                    rate_cull = 1e30, # immediate culling once response starts
                    vacc_coverage = 0, # prop of individuals getting vaccinated
                    vacc_efficacy = 0.65, # prop of vaccinated individuals getting protection
-                   quarant_efficacy = 0.9, # 90% outward transmission reduction
+                   quarant_efficacy_in = 0.2, # 20% transmission reduction within herd
+                   quarant_efficacy_out = 0.9, # 90% outward transmission reduction
                    insect_efficacy = 0.5, # % reduction of transmission due to insecticide
                    interv_delay = 1e30, # how many day after 1st case to start
                    interv_release = 28, # how many days after the last case to stop
@@ -79,7 +80,11 @@ lsdsim <- function(grid_size = 1,
 
   rate_vacc <- -log(1 - (vacc_coverage * vacc_efficacy))
   
-  delta_quarant <- add_quarantine(delta, quarant_efficacy)
+  delta_quarant <- add_quarantine(
+    delta, 
+    quarant_efficacy_in,
+    quarant_efficacy_out
+  )
   
   delta_ori <- delta # copy of the original delta matrix
   temp <- delta
