@@ -50,3 +50,27 @@ plot(
   xlab = "Grid size (sqrt(nb. populations))", 
   ylab = "Runtime (s)"
 )
+
+
+# 3. scaling with/without intervention
+interv_vec <- rep(c(FALSE, TRUE), each = 20)
+exp_3_time <- lapply(
+  interv_vec, 
+  function(e) system.time(
+    lsdsim(grid_size = 1, time = 50, 
+           vaccination = e, 
+           culling = e, 
+           quarantine = e, 
+           insecticide = e, 
+           interv_delay = 1
+    )
+  )
+)
+exp_3_res <- cbind.data.frame(interv = interv_vec, Reduce(rbind, exp_3_time))
+dotchart(
+  exp_3_res$elapse, pch = 20, 
+  main = "lsddim: scaling with grid size", 
+  xlab = "Runtime (s)",
+  ylab = "Simulation (red = intervention)",
+  col = interv_vec + 1
+)
