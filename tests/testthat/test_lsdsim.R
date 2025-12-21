@@ -200,7 +200,7 @@ test_that(
 
 
 test_that(
-  "culling works as expected", {
+  "mass culling works as expected", {
     res <- lsdsim(time = 20, grid_size = 3, 
                   ini_S = 1000, 
                   ini_E = c(10, rep(0, 8)),
@@ -227,6 +227,39 @@ test_that(
     expect_equal(res[, "I_1"], rep(c(8, 0), c(4, 16)))
     expect_equal(res[, "R_1"], rep(c(5, 0), c(4, 16)))
     expect_equal(res[, "V_1"], rep(c(123, 0), c(4, 16)))
+  }
+)
+
+
+test_that(
+  "selective culling works as expected", {
+    res <- lsdsim(time = 20, grid_size = 3, 
+                  ini_S = 1000, 
+                  ini_E = c(10, rep(0, 8)),
+                  ini_I = c(8, rep(0, 8)),
+                  ini_R = c(5, rep(0, 8)),
+                  ini_V = c(123, rep(0, 8)),
+                  sigma = 0, # no leaving E
+                  gamma = 0, # no leaving I
+                  beta = 0, # no transmission beyond first case
+                  select_culling = TRUE,
+                  rate_cull = 1000, # immediate kill of all infected cattles once in response
+                  interv_delay = 4, # response 4 days after 1st case
+                  interv_release = 10 # response stops 10 days after last case
+    )
+    
+    C <- res[, grep("C_", colnames(res))]
+    
+    ## expectation: intervention from day 5 to 12
+    ## selective culling takes place on day 5 in patch 1
+    ## only I are culled (C) the rest stays as is
+    expect_true(all(C[1:4, 1] == 0))
+    expect_true(all(C[5:20, 1] == 8))
+    expect_equal(res[, "S_1"], rep(1000, 20))
+    expect_equal(res[, "E_1"], rep(10, 20))
+    expect_equal(res[, "I_1"], rep(c(8, 0), c(4, 16)))
+    expect_equal(res[, "R_1"], rep(5, 20))
+    expect_equal(res[, "V_1"], rep(123, 20))
   }
 )
 
