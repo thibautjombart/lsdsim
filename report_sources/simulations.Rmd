@@ -2,7 +2,8 @@
 title: "A stochastic meta-population model of LSDV epidemics"
 author: "Thibaut Jombart"
 params:
-  n_rep: 200
+  n_rep: 2
+  run_sim: TRUE
 output:
   html_document: default
 ---
@@ -129,11 +130,11 @@ inputs$label <- apply(inputs, 1, function(e) substr(digest(e), 1, 8))
 
 
 
-### Baseline scenario: no response
+### *baseline* scenario: no response
 
 In these simulations, we use no response.
 
-```{r baseline}
+```{r baseline, eval = params$run_sim}
 output_dir <- here::here("outputs", "simulations", "baseline", Sys.Date())
 if (!dir.exists(output_dir)) {
   dir.create(output_dir, recursive = TRUE)
@@ -154,7 +155,8 @@ for (i in seq_len(n_rep)) {
     cfr = inputs$cfr[i],
     quarantine = FALSE,
     vaccination = FALSE, 
-    culling = FALSE, 
+    mass_culling = FALSE, 
+    select_culling = FALSE,
     insecticide = FALSE
   )
   
@@ -181,12 +183,14 @@ rio::export(res_baseline, file.path(output_dir, "summary.xlsx"))
 
 
 
-### cull_vacc scenario: mass culling and ring vaccination
+### *cull_vacc* scenario: mass culling and ring vaccination
 
-In these simulations, we use mass culling of the affected herds, and 
-ring vaccination.
+In these simulations, we use:
 
-```{r cull_vacc}
+- mass culling of the affected herds
+- ring vaccination (i.e. vaccination of neighbours)
+
+```{r cull_vacc, eval = params$run_sim}
 output_dir <- here::here("outputs", "simulations", "cull_vacc", Sys.Date())
 if (!dir.exists(output_dir)) {
   dir.create(output_dir, recursive = TRUE)
@@ -207,7 +211,8 @@ for (i in seq_len(n_rep)) {
     cfr = inputs$cfr[i],
     quarantine = FALSE,
     vaccination = TRUE, 
-    culling = TRUE, 
+    mass_culling = TRUE, 
+    select_culling = FALSE,
     insecticide = FALSE,
     interv_delay = 7,
     interv_release = 28,
@@ -238,11 +243,14 @@ rio::export(res_cull_vacc, file.path(output_dir, "summary.xlsx"))
 
 
 
-### Quarant_vacc scenario: quarantine and ring vaccination
+### *quarant_vacc* scenario: quarantine and ring vaccination
 
-In these simulations, we use quarantine of infected herds and ring vaccination.
+In these simulations, we use:
 
-```{r quarant_vacc}
+- quarantine of infected herds and neighbours
+- vaccination of infected herds and neighbours
+
+```{r quarant_vacc, eval = params$run_sim}
 output_dir <- here::here("outputs", "simulations", "quarant_vacc", Sys.Date())
 if (!dir.exists(output_dir)) {
   dir.create(output_dir, recursive = TRUE)
@@ -263,7 +271,8 @@ for (i in seq_len(n_rep)) {
     cfr = inputs$cfr[i],
     quarantine = TRUE,
     vaccination = TRUE, 
-    culling = FALSE, 
+    mass_culling = FALSE, 
+    select_culling = FALSE,
     insecticide = FALSE,
     interv_delay = 7,
     interv_release = 28,
@@ -294,12 +303,85 @@ rio::export(res_quarant_vacc, file.path(output_dir, "summary.xlsx"))
 ```
 
 
-### all_but_cull scenario: quarantine, ring vaccination, insecticide
 
-In these simulations, we use quarantine of infected herds, ring vaccination,
-and insecticide spray.
+### *selcull_quarant_vacc* scenario: selective culling, quarantine and ring vaccination
 
-```{r all_but_cull}
+In these simulations, we use:
+
+- selective culling of infected individuals
+- quarantine of infected herds and neighbours
+- vaccination of infected herds and neighbours
+ 
+
+```{r selcull_quarant_vacc, eval = params$run_sim}
+output_dir <- here::here("outputs", "simulations", "quarant_vacc", Sys.Date())
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
+
+res_selcull_quarant_vacc <- vector(mode = "list", length = n_rep)
+for (i in seq_len(n_rep)) {
+  ## run simulation
+  current_sim <- fast_lsdsim(
+    grid_size = grid_size, 
+    time = duration,
+    ini_S = unlist(inputs$ini_S[[i]]), 
+    ini_I = unlist(inputs$ini_I[[i]]),
+    delta = delta,
+    beta = inputs$beta[i],
+    sigma = inputs$sigma[i],
+    gamma = inputs$gamma[i],
+    cfr = inputs$cfr[i],
+    quarantine = TRUE,
+    vaccination = TRUE, 
+    mass_culling = FALSE,
+    select_culling = TRUE,
+    insecticide = FALSE,
+    interv_delay = 7,
+    interv_release = 28,
+    quarant_efficacy_in = 0.2,
+    quarant_efficacy_out = 0.9,
+    vacc_coverage = 1, 
+    vacc_efficacy = 0.65, 
+    rate_cull = 0.5
+  )
+  
+  ## save full simulation to file
+  out_file <- file.path(
+    output_dir, 
+    paste0(inputs$label[i], "_quarant_vacc", ".qs")
+  )
+  qsave(current_sim, out_file)
+  
+  ## store summary
+  res_selcull_quarant_vacc [[i]] <- summary(current_sim)[duration, ]
+}
+
+res_selcull_quarant_vacc  <- cbind(
+  label = inputs$label, 
+  bind_rows(res_selcull_quarant_vacc )
+)
+
+head(res_selcull_quarant_vacc )
+summary(res_selcull_quarant_vacc)
+
+qsave(res_selcull_quarant_vacc, file.path(output_dir, "summary.qs"))
+rio::export(res_selcull_quarant_vacc, file.path(output_dir, "summary.xlsx"))
+
+```
+
+
+### *all_but_cull* scenario: selective culling, quarantine, ring vaccination, insecticide (all but mass culling)
+
+In these simulations, we use:
+
+- selective culling of infected individuals
+- quarantine of infected herds and neighbours
+- vaccination of infected herds and neighbours
+- insecticide spray of infected herds and neighbours
+
+
+```{r all_but_cull, eval = params$run_sim}
 output_dir <- here::here("outputs", "simulations", "all_but_cull", Sys.Date())
 if (!dir.exists(output_dir)) {
   dir.create(output_dir, recursive = TRUE)
@@ -320,7 +402,8 @@ for (i in seq_len(n_rep)) {
     cfr = inputs$cfr[i],
     quarantine = TRUE,
     vaccination = TRUE, 
-    culling = FALSE, 
+    mass_culling = FALSE,
+    select_culling = TRUE,
     insecticide = TRUE,
     interv_delay = 7,
     interv_release = 28,
@@ -328,6 +411,7 @@ for (i in seq_len(n_rep)) {
     vacc_efficacy = 0.65,
     quarant_efficacy_in = 0.2,
     quarant_efficacy_out = 0.9, 
+    rate_cull = 0.5,
     insect_efficacy = 0.5
   )
   
@@ -352,11 +436,11 @@ rio::export(res_all_but_cull, file.path(output_dir, "summary.xlsx"))
 ```
 
 
-### all scenario: culling, quarantine, ring vaccination, insecticide
+### all scenario: mass culling, quarantine, ring vaccination, insecticide
 
 In these simulations, we use mass culling, ring quarantine and vaccination, and insecticide spray.
 
-```{r all}
+```{r all, eval = params$run_sim}
 output_dir <- here::here("outputs", "simulations", "all", Sys.Date())
 if (!dir.exists(output_dir)) {
   dir.create(output_dir, recursive = TRUE)
@@ -377,7 +461,8 @@ for (i in seq_len(n_rep)) {
     cfr = inputs$cfr[i],
     quarantine = TRUE,
     vaccination = TRUE, 
-    culling = TRUE, 
+    mass_culling = TRUE, 
+    select_culling = TRUE, # redundant with mass culling but for consistency
     insecticide = TRUE,
     interv_delay = 7,
     interv_release = 28,
@@ -413,10 +498,11 @@ rio::export(res_all, file.path(output_dir, "summary.xlsx"))
 
 ## Analyses
 
-```{r}
+```{r eval = params$run_sim}
 res_baseline$scenario <- "baseline"
 res_cull_vacc$scenario <- "cull_vacc"
 res_quarant_vacc$scenario <- "quarant_vacc"
+res_selcull_quarant_vacc$scenario <- "selcull_quarant_vacc"
 res_all_but_cull$scenario <- "all_but_cull"
 res_all$scenario <- "all"
 
@@ -424,6 +510,7 @@ res <- bind_rows(
   res_baseline, 
   res_cull_vacc, 
   res_quarant_vacc, 
+  res_selcull_quarant_vacc,
   res_all_but_cull,
   res_all
   ) %>% 
@@ -435,13 +522,35 @@ res <- bind_rows(
       scenario, levels = c(
         "baseline", 
         "cull_vacc", 
-        "quarant_vacc", 
+        "quarant_vacc",
+        "selcull_quarant_vacc",
         "all_but_cull",
         "all")
       )
   )
-  
+
+file_name <- paste0("res_", Sys.Date(), ".qs")
+qsave(res, here::here("outputs", file_name))
+
 ```
+
+This is evaluated only if new results have not been obtained, fetching the 
+latest version of the results:
+```{r eval = !params$run_sim}
+all_files <- list.files(here::here("outputs"), pattern = "^res")
+extract_date <- function(x) {
+  out <- gsub("[^[:digit:]-]", "", x)
+  as.Date(out)
+}
+dates <- sapply(all_files, extract_date)
+to_keep <- which.max(dates)
+file_to_keep <- all_files[to_keep]
+file_to_keep
+message("reading results from file:", file_to_keep)
+res <- qread(here::here("outputs", file_to_keep))
+```
+
+
 
 ```{r out.width = "100%"}
 label_numbers <- function(x, show_1_as_0 = FALSE) {
