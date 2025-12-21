@@ -443,7 +443,7 @@ res <- bind_rows(
   
 ```
 
-```{r}
+```{r out.width = "100%"}
 label_numbers <- function(x, show_1_as_0 = FALSE) {
   out <- scales::label_number(scale_cut = scales::cut_long_scale())(x)
   if (show_1_as_0) {

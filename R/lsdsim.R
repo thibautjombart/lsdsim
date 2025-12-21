@@ -14,7 +14,7 @@ lsdsim <- function(grid_size = 1,
                    sigma = 1/7, # inv. latent period
                    gamma = 1/20, # inv. duration of infection
                    cfr = 0.1, # case fatality ratio
-                   culling = FALSE, # mass culling in affected populations?
+                   mass_culling = FALSE, # mass culling in affected populations?
                    vaccination = FALSE, # vaccinate affected population and neighbours?
                    quarantine = FALSE, # quarantine in affected pop and neighbours?
                    insecticide = FALSE, # use insecticide in affected pop and neighbours?
@@ -111,11 +111,11 @@ lsdsim <- function(grid_size = 1,
     
     ## response-associated processes
     ##
-    ## - culling: mass culling of affected population 
+    ## - mass_culling: mass culling of affected population 
     ## - vaccination: vaccination of affected pop and neighbours
     ## - quarantine: quarantine of affected pop and neighbours
     ## - insecticide: insecticide administered in affected pop and neighbours
-    if (culling) {
+    if (mass_culling) {
       rate_into_C <- rep(0, n_pop)
       rate_into_C[in_response] <- rate_cull
     } else {
@@ -145,7 +145,7 @@ lsdsim <- function(grid_size = 1,
     ## individuals leaving S...
     ## - to E (new infections)
     ## - to V (vaccination)
-    ## (culling will be handled separately)
+    ## (mass_culling will be handled separately)
       
     ## nested binomials are used to decide where individuals leaving S go
     rate_S_E <- as.vector(delta %*% (current_beta * I[t, ] / N[t, ]))

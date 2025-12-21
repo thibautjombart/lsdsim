@@ -210,7 +210,7 @@ test_that(
                   sigma = 0, # no leaving E
                   gamma = 0, # no leaving I
                   beta = 0, # no transmission beyond first case
-                  culling = TRUE,
+                  mass_culling = TRUE,
                   interv_delay = 4, # response 4 days after 1st case
                   interv_release = 10 # response stops 10 days after last case
     )
