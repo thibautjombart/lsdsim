@@ -8,34 +8,36 @@
 #' @export
 #' 
 
-lsdsim <- function(grid_size = 1,
-                   time = 365,
-                   beta = 0.1, # density-dependent infection rate
-                   sigma = 1/7, # inv. latent period
-                   gamma = 1/20, # inv. duration of infection
-                   cfr = 0.1, # case fatality ratio
-                   mass_culling = FALSE, # mass culling in affected populations?
-                   vaccination = FALSE, # vaccinate affected population and neighbours?
-                   quarantine = FALSE, # quarantine in affected pop and neighbours?
-                   insecticide = FALSE, # use insecticide in affected pop and neighbours?
-                   rate_cull = 1e30, # immediate culling once response starts
-                   vacc_coverage = 0, # prop of individuals getting vaccinated
-                   vacc_efficacy = 0.65, # prop of vaccinated individuals getting protection
-                   quarant_efficacy_in = 0.2, # 20% transmission reduction within herd
-                   quarant_efficacy_out = 0.9, # 90% outward transmission reduction
-                   insect_efficacy = 0.5, # % reduction of transmission due to insecticide
-                   interv_delay = 1e30, # how many day after 1st case to start
-                   interv_release = 28, # how many days after the last case to stop
-                   delta = NULL, 
-                   diffusion = 0,
-                   ini_S = 0,
-                   ini_E = 0,
-                   ini_I = 0,
-                   ini_C = 0,
-                   ini_D = 0,
-                   ini_R = 0,
-                   ini_V = 0
-                   ) {
+lsdsim <- function(
+    grid_size = 1,
+    time = 365,
+    beta = 0.1, # density-dependent infection rate
+    sigma = 1/7, # inv. latent period
+    gamma = 1/20, # inv. duration of infection
+    cfr = 0.1, # case fatality ratio
+    mass_culling = FALSE, # mass culling in affected populations?
+    select_culling = FALSE, # culling of infected (I) individuals only
+    vaccination = FALSE, # vaccinate affected population and neighbours?
+    quarantine = FALSE, # quarantine in affected pop and neighbours?
+    insecticide = FALSE, # use insecticide in affected pop and neighbours?
+    rate_cull = 1e30, # immediate culling once response starts
+    vacc_coverage = 0, # prop of individuals getting vaccinated
+    vacc_efficacy = 0.65, # prop of vaccinated individuals getting protection
+    quarant_efficacy_in = 0.2, # 20% transmission reduction within herd
+    quarant_efficacy_out = 0.9, # 90% outward transmission reduction
+    insect_efficacy = 0.5, # % reduction of transmission due to insecticide
+    interv_delay = 1e30, # how many day after 1st case to start
+    interv_release = 28, # how many days after the last case to stop
+    delta = NULL, 
+    diffusion = 0,
+    ini_S = 0,
+    ini_E = 0,
+    ini_I = 0,
+    ini_C = 0,
+    ini_D = 0,
+    ini_R = 0,
+    ini_V = 0
+) {
   
   ## handle arguments
   ### recycle arguments as needed
@@ -112,6 +114,7 @@ lsdsim <- function(grid_size = 1,
     ## response-associated processes
     ##
     ## - mass_culling: mass culling of affected population 
+    ## - select_culling: culling of I only once in response mode
     ## - vaccination: vaccination of affected pop and neighbours
     ## - quarantine: quarantine of affected pop and neighbours
     ## - insecticide: insecticide administered in affected pop and neighbours
@@ -120,6 +123,13 @@ lsdsim <- function(grid_size = 1,
       rate_into_C[in_response] <- rate_cull
     } else {
       rate_into_C <- 0
+    }
+    
+    if (select_culling) {
+      rate_I_C <- rep(0, n_pop)
+      rate_I_C[in_response] <- rate_cull
+    } else {
+      rate_I_C <- 0
     }
     
     if (vaccination) {
@@ -176,12 +186,12 @@ lsdsim <- function(grid_size = 1,
     ## individuals leaving I...
     ## - to recover (R)
     ## - to die from the disease (D)
-    ## - to be culled (C)
+    ## - to be culled (C), either though mass culling of selective culling
     ##
     ## We first draw individuals going to R or D (i.e. not culled), then draw
     ## disease outcome from the CFR.
   
-    rate_I_out <- gamma + rate_into_C
+    rate_I_out <- gamma + rate_into_C + rate_I_C
     p_I_out <- 1 - exp(-rate_I_out)
     n_I_out <- rbinom(n_pop, size = I[t, ], prob = p_I_out)
     I_RD_ratio <- gamma / rate_I_out

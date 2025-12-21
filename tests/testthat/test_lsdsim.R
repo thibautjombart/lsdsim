@@ -262,6 +262,7 @@ test_that(
   {
     ## expectation: 
     ## infection spreads everywhere, last step is all I
+    set.seed(1)
     res <- lsdsim(grid_size = 3, time = 20, 
                   ini_S = 1e4,
                   ini_I = c(1, rep(0, 8)),
