@@ -2,10 +2,12 @@
 title: "A stochastic meta-population model of LSDV epidemics"
 author: "Thibaut Jombart"
 params:
-  n_rep: 2
-  run_sim: TRUE
+  n_rep: 500
+  run_sim: FALSE
 output:
-  html_document: default
+  html_document: 
+    toc: true
+    toc_depth: 3
 ---
 
 
@@ -21,13 +23,16 @@ knitr::opts_chunk$set(
 
 ## Outline of the work
 
-In this report, we use a stochastic, meta-population SEIRDV model to simulate 
-outbreaks of Lumpy skin disease virus. We contrast two types of response:
+In this report, we use a stochastic, meta-population SEIRCDV model to simulate 
+outbreaks of Lumpy skin disease virus. We contrast different response scenario:
 
-1. a baseline response which replicates current response in France with mass 
-culling of infected herds
+1. **baseline**: no response
+2. **cull_vacc scenario**: mass culling of infected farms, ring vaccination
+3. **quarant_vacc**: quarantine (local and ring) and vaccination (local and ring)
+4. **selcull_quarant_vacc**: selective culling (only individuals in $I$), quarantine (local and ring) and vaccination (local and ring)
+5. **all_but_cull scenario**: all but mass culling (selective culling, vaccination, quarantine, insecticide)
+6. **all**: all measures combined
 
-2. an alternative response which uses quarantine of infected herds, with no culling
 
 
 ## Simulation setup
@@ -343,13 +348,13 @@ for (i in seq_len(n_rep)) {
     quarant_efficacy_out = 0.9,
     vacc_coverage = 1, 
     vacc_efficacy = 0.65, 
-    rate_cull = 0.5
+    rate_cull = 1e30 # immediate culling
   )
   
   ## save full simulation to file
   out_file <- file.path(
     output_dir, 
-    paste0(inputs$label[i], "_quarant_vacc", ".qs")
+    paste0(inputs$label[i], "_selcull_quarant_vacc", ".qs")
   )
   qsave(current_sim, out_file)
   
@@ -411,7 +416,7 @@ for (i in seq_len(n_rep)) {
     vacc_efficacy = 0.65,
     quarant_efficacy_in = 0.2,
     quarant_efficacy_out = 0.9, 
-    rate_cull = 0.5,
+    rate_cull = 1e30,
     insect_efficacy = 0.5
   )
   
@@ -569,6 +574,7 @@ p_cases <- ggplot(res, aes(x = scenario, y = total_cases)) +
   ) + 
   theme_bw() + 
   labs(
+    x = "",
     y = "Total cases"
   )
 
@@ -580,6 +586,7 @@ p_n_pop <- ggplot(res, aes(x = scenario, y = n_pop_ever_infec)) +
   ) + 
   theme_bw() + 
   labs(
+    x = "",
     y = "Number of herds affected"
     )
 
@@ -588,6 +595,7 @@ p_immun <- ggplot(res, aes(x = scenario, y = p_immun)) +
   geom_violin(scale = "width") + 
   theme_bw() + 
   labs(
+    x = "",
     y = "Proportion of immunized\ncattles"
     )
 
@@ -599,8 +607,9 @@ p_dead <- ggplot(res, aes(x = scenario, y = (D+C))) +
   ) + 
   theme_bw() + 
   labs(
+    x = "",
     y = "Number of dead cattles"
-    )
+  )
 
 rotated_x <- theme(
   axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)
@@ -615,6 +624,65 @@ plot_grid(
 
 ```
 
+Some summary statistics:
+```{r}
+# f_smry <- function(x) {
+#   out <- c(
+#     mean = mean(x), 
+#     median = median(x), 
+#     CI_95 = sprintf("[%f;%f]", 
+#                     quantile(x, 0.025), 
+#                     quantile(x, 0.975)
+#                     )
+#   )
+# }
+
+# total cases
+res %>% 
+  group_by(scenario) %>% 
+  summarise(
+    mean_cases = mean(total_cases) %>% label_numbers(), 
+    median_cases = median(total_cases) %>% label_numbers(), 
+    cases_0.025 = quantile(total_cases, 0.025) %>% label_numbers(),
+    cases_0.975 = quantile(total_cases, 0.975) %>% label_numbers(),
+    p_greater_100_cases = mean(total_cases >= 100) 
+  ) %>% 
+  knitr::kable(digits = 4)
+
+# attack rates
+res %>% 
+  group_by(scenario) %>% 
+  summarise(
+    mean_ar = mean(ar), 
+    median_ar = median(ar), 
+    ar_0.025 = quantile(ar, 0.025),
+    ar_0.975 = quantile(ar, 0.975)
+  ) %>% 
+  knitr::kable(digits = 4)
+  
+# deaths
+res %>% 
+  group_by(scenario) %>% 
+  summarise(
+    mean_deaths = mean(C+D) %>% label_numbers(), 
+    median_deaths = median(C+D) %>% label_numbers(), 
+    deaths_0.025 = quantile(C+D, 0.025) %>% label_numbers(),
+    deaths_0.975 = quantile(C+D, 0.975) %>% label_numbers()
+  ) %>% 
+  knitr::kable()
+
+# farms affected
+res %>% 
+  group_by(scenario) %>% 
+  summarise(
+    mean_farms = mean(n_pop_ever_infec),
+    median_farms = median(n_pop_ever_infec),
+    farms_0.025 = quantile(n_pop_ever_infec, 0.025),
+    farms_0.975 = quantile(n_pop_ever_infec, 0.975)
+    ) %>% 
+  knitr::kable(digits = 2)
+
+```
 
 
 
