@@ -364,12 +364,13 @@ test_that(
     ## expectation: 
     ## infection stops because insecticide has perfect efficacy
     ## only 1 infected in pop 1, no infection elsewhere
-    res <- lsdsim(grid_size = 3, time = 20, 
-                  ini_S = 1e4,
+    res <- lsdsim(grid_size = 3, time = 30, 
+                  ini_S = 100,
                   ini_I = c(1, rep(0, 8)),
-                  interv_delay = 1, # intervention 1 day after 1st case
+                  interv_delay = 7, # intervention 1 day after 1st case, 
+                  interv_release = 3, 
                   insecticide = TRUE, 
-                  insect_efficacy = 1,
+                  insect_efficacy = 0.3,
                   sigma = 1e30, # fast E->I
                   gamma = 0, # no leaving I
                   beta = 1,

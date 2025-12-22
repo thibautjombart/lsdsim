@@ -3,7 +3,7 @@ title: "A stochastic meta-population model of LSDV epidemics"
 author: "Thibaut Jombart"
 params:
   n_rep: 500
-  run_sim: FALSE
+  run_sim: TRUE
 output:
   html_document: 
     toc: true
