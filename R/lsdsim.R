@@ -75,8 +75,8 @@ lsdsim <- function(
   N[1, ] <- ini_N
   status <- matrix("naive", nrow = time, ncol = n_pop)
   
-  has_cases <- rep(FALSE, n_pop)
-  days_with_cases <- rep(0, n_pop)
+  has_an_outbreak <- rep(FALSE, n_pop)
+  days_in_outbreak <- rep(0, n_pop)
   days_without_cases <- rep(0, n_pop)
   in_response <- rep(FALSE, n_pop)
 
@@ -97,14 +97,44 @@ lsdsim <- function(
     
     ## state monitoring variables
     ##
-    ## - in_response: logical indicating populations with ongoing outbreak 
-    ##   response
+    ## - in_response: logical indicating populations with ongoing outbreak
+    ## response
+    ## - was_in_response: same, for the previous time steps
     ## - id_pop_in_response: indices of populations in response
     ## - id_pop_in_ring: indices of neighbours to populations in response
-    has_cases <- has_cases | (I[t, ] > 0)
-    days_with_cases[has_cases] <- days_with_cases[has_cases] + 1
+    ## - id_pop_response_and_ring: indices of pop in response and ring
+    ##
+    ## The process for monitoring outbreaks and response states is as follows:
+    ##
+    ## - has_an_outbreak: indicates pops which has had at least one case; once 
+    ##   TRUE, it stays TRUE until the end of an outbreak response; at any time
+    ##   step, it includes all previously TRUE, and pops with at least one I; 
+    ##   resets to FALSE once an outbreak response ends
+    ## - days_in_outbreak: counts the number of days since the first case; this 
+    ##   is used to know when to trigger a new response; it is reset to zero 
+    ##   once an outbreak response ends
+    ## - days_without_cases: counts the number of days with no case in the pop;
+    ##   it is reset to 0 once there is a least one case
+    
+    
+    ## monitor pops with an ongoing outbreak
+    has_an_outbreak <-  has_an_outbreak | (I[t, ] > 0)
+    days_in_outbreak[has_an_outbreak] <- days_in_outbreak[has_an_outbreak] + 1
+    
+    ## monitor pops with a period of no cases
     days_without_cases[I[t, ] == 0] <- days_without_cases[I[t, ] == 0] + 1
-    in_response <- (days_with_cases >= interv_delay) & (days_without_cases <= interv_release)
+    days_without_cases[I[t, ] > 0] <- 0
+    
+    ## trigger new responses
+    was_in_response <- in_response
+    in_response <- (days_in_outbreak >= interv_delay) & (days_without_cases <= interv_release)
+    
+    ## stop responses after x days with no case, and reset counters
+    response_stopped <- was_in_response & !in_response
+    has_an_outbreak[response_stopped] <- FALSE
+    days_in_outbreak[response_stopped] <- 0
+    
+    ## monitor IDs of pops in response, and the associated rings
     id_pop_in_response <- which(in_response)
     id_pop_in_ring <-  unique(unlist(list_neighbours[in_response]))
     id_pop_response_and_ring <- unique(c(id_pop_in_response, id_pop_in_ring))

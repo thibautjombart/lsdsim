@@ -381,5 +381,3 @@ test_that(
     expect_true(all(I[, -1] == 0))
   }
 )
-
-
