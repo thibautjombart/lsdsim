@@ -30,7 +30,7 @@ outbreaks of Lumpy skin disease virus. We contrast different response scenario:
 2. **cull_vacc scenario**: mass culling of infected farms, ring vaccination
 3. **quarant_vacc**: quarantine (local and ring) and vaccination (local and ring)
 4. **selcull_quarant_vacc**: selective culling (only individuals in $I$), quarantine (local and ring) and vaccination (local and ring)
-5. **all_but_cull scenario**: all but mass culling (selective culling, vaccination, quarantine, insecticide)
+5. **selcull_quarant_vacc_insect scenario**: all but mass culling (selective culling, vaccination, quarantine, insecticide)
 6. **all**: all measures combined
 
 
@@ -71,7 +71,7 @@ delta <- make_delta(xy, diffusion = 0.05)
 
 The size of the farms, in number of herds, is drawn using an average herd size 
 of 50, exponentially distributed with a minimum at 20 individuals:
-```{r}
+```{r fig.width = 7, fig.height = 7}
 r_herd_size <- function(n) {
   20 + round(rexp(nrow(xy), 1/30))
 }
@@ -88,8 +88,9 @@ herds <- cbind.data.frame(xy, size = r_herd_size(n_pop))
 ggplot(herds, aes(x = x, y = y)) + 
   geom_tile(aes(fill = size)) + 
   theme_bw() + 
-  scale_fill_viridis_c("Herd size") + 
+  scale_fill_viridis_c("Herd size", n.breaks = 8) + 
   labs(title = "Example of a meta-population")
+
 ```
 
 In practice, every simulation will use a different population setting (randomly drawn herd sizes).
@@ -376,7 +377,7 @@ rio::export(res_selcull_quarant_vacc, file.path(output_dir, "summary.xlsx"))
 ```
 
 
-### *all_but_cull* scenario: selective culling, quarantine, ring vaccination, insecticide (all but mass culling)
+### *selcull_quarant_vacc_insect* scenario: selective culling, quarantine, ring vaccination, insecticide (all but mass culling)
 
 In these simulations, we use:
 
@@ -386,13 +387,13 @@ In these simulations, we use:
 - insecticide spray of infected herds and neighbours
 
 
-```{r all_but_cull, eval = params$run_sim}
-output_dir <- here::here("outputs", "simulations", "all_but_cull", Sys.Date())
+```{r selcull_quarant_vacc_insect, eval = params$run_sim}
+output_dir <- here::here("outputs", "simulations", "selcull_quarant_vacc_insect", Sys.Date())
 if (!dir.exists(output_dir)) {
   dir.create(output_dir, recursive = TRUE)
 }
 
-res_all_but_cull <- vector(mode = "list", length = n_rep)
+res_selcull_quarant_vacc_insect <- vector(mode = "list", length = n_rep)
 for (i in seq_len(n_rep)) {
   ## run simulation
   current_sim <- fast_lsdsim(
@@ -423,20 +424,20 @@ for (i in seq_len(n_rep)) {
   ## save full simulation to file
   out_file <- file.path(
     output_dir, 
-    paste0(inputs$label[i], "_all_but_cull", ".qs")
+    paste0(inputs$label[i], "_selcull_quarant_vacc_insect", ".qs")
   )
   qsave(current_sim, out_file)
   
   ## store summary
-  res_all_but_cull[[i]] <- summary(current_sim)[duration, ]
+  res_selcull_quarant_vacc_insect[[i]] <- summary(current_sim)[duration, ]
 }
 
-res_all_but_cull <- cbind(label = inputs$label, bind_rows(res_all_but_cull))
-head(res_all_but_cull)
-summary(res_all_but_cull)
+res_selcull_quarant_vacc_insect <- cbind(label = inputs$label, bind_rows(res_selcull_quarant_vacc_insect))
+head(res_selcull_quarant_vacc_insect)
+summary(res_selcull_quarant_vacc_insect)
 
-qsave(res_all_but_cull, file.path(output_dir, "summary.qs"))
-rio::export(res_all_but_cull, file.path(output_dir, "summary.xlsx"))
+qsave(res_selcull_quarant_vacc_insect, file.path(output_dir, "summary.qs"))
+rio::export(res_selcull_quarant_vacc_insect, file.path(output_dir, "summary.xlsx"))
 
 ```
 
@@ -508,7 +509,7 @@ res_baseline$scenario <- "baseline"
 res_cull_vacc$scenario <- "cull_vacc"
 res_quarant_vacc$scenario <- "quarant_vacc"
 res_selcull_quarant_vacc$scenario <- "selcull_quarant_vacc"
-res_all_but_cull$scenario <- "all_but_cull"
+res_selcull_quarant_vacc_insect$scenario <- "selcull_quarant_vacc_insect"
 res_all$scenario <- "all"
 
 res <- bind_rows(
@@ -516,7 +517,7 @@ res <- bind_rows(
   res_cull_vacc, 
   res_quarant_vacc, 
   res_selcull_quarant_vacc,
-  res_all_but_cull,
+  res_selcull_quarant_vacc_insect,
   res_all
   ) %>% 
   select(scenario, everything()) %>% 
@@ -529,7 +530,7 @@ res <- bind_rows(
         "cull_vacc", 
         "quarant_vacc",
         "selcull_quarant_vacc",
-        "all_but_cull",
+        "selcull_quarant_vacc_insect",
         "all")
       )
   )
@@ -567,7 +568,7 @@ label_numbers <- function(x, show_1_as_0 = FALSE) {
 }
 
 p_cases <- ggplot(res, aes(x = scenario, y = total_cases)) + 
-  geom_violin(scale = "width") + 
+  geom_violin(scale = "width", fill = "#F5275E", alpha = 0.65) + 
   scale_y_continuous(
     transform = "log10", 
     labels = function(e) label_numbers(e, show_1_as_0 = TRUE)
@@ -579,7 +580,7 @@ p_cases <- ggplot(res, aes(x = scenario, y = total_cases)) +
   )
 
 p_n_pop <- ggplot(res, aes(x = scenario, y = n_pop_ever_infec)) + 
-  geom_violin(scale = "width") + 
+  geom_violin(scale = "width", fill = "#F5275E", alpha = 0.65) + 
   scale_y_continuous(
     transform = "log10", 
     labels = function(e) label_numbers(e, show_1_as_0 = TRUE)
@@ -587,20 +588,20 @@ p_n_pop <- ggplot(res, aes(x = scenario, y = n_pop_ever_infec)) +
   theme_bw() + 
   labs(
     x = "",
-    y = "Number of herds affected"
+    y = "Number of farms\naffected"
     )
 
 
 p_immun <- ggplot(res, aes(x = scenario, y = p_immun)) + 
-  geom_violin(scale = "width") + 
+  geom_violin(scale = "width", fill = "#F5275E", alpha = 0.65) + 
   theme_bw() + 
   labs(
     x = "",
-    y = "Proportion of immunized\ncattles"
+    y = "Proportion of\nimmunized cattles"
     )
 
 p_dead <- ggplot(res, aes(x = scenario, y = (D+C))) + 
-  geom_violin(scale = "width") + 
+  geom_violin(scale = "width", fill = "#F5275E", alpha = 0.65) + 
   scale_y_continuous(
     transform = "log10", 
     labels = function(e) label_numbers(e, show_1_as_0 = TRUE)
@@ -608,7 +609,7 @@ p_dead <- ggplot(res, aes(x = scenario, y = (D+C))) +
   theme_bw() + 
   labs(
     x = "",
-    y = "Number of dead cattles"
+    y = "Number of dead\ncattles"
   )
 
 rotated_x <- theme(
@@ -619,7 +620,8 @@ plot_grid(
   p_cases + rotated_x, 
   p_n_pop + rotated_x,
   p_immun + rotated_x, 
-  p_dead + rotated_x
+  p_dead + rotated_x,
+  labels = LETTERS[1:4]
 )
 
 ```
