@@ -1,14 +1,95 @@
 ---
-title: "A stochastic meta-population model of LSDV epidemics"
+title: "A stochastic meta-population model of LSD epidemics"
 author: "Thibaut Jombart"
 date: "`r Sys.Date()`"
 output: github_document
 ---
 
 
+This repository contains the __R__ package _lsdsim_ which implements a 
+stochastic, meta-population compartmental model of Lumpy Skin Disease (LSD), 
+including the simulation of different types of interventions.
+
+It also contains an an instance of [_reportfactory_](https://www.reconverse.org/reportfactory/) to run epidemic simulations in a reproducible way. 
+
+This repository is still under development. In particular, documentation and testing will be improved in early 2026. If you intend on using its content, do 
+not hesitate to contact me at [thibautjombart@gmail.com](mailto:thibautjombart@gmail.com).
+
+
 ## Getting started
 
+### Downloading the repository
 
+You first need to clone or download the content of this repository, and open
+an R session inside the main folder. 
+
+To clone the repository, use:
+```{bash, eval = FALSE}
+git clone git@github.com:thibautjombart/lsdsim.git
+```
+
+If you have already cloned the repository, make sure you have the latest version
+by opening a terminal in the main folder and typing:
+```{bash, eval = FALSE}
+git pull
+```
+
+If you use [Rstudio](https://posit.co/download/rstudio-desktop/), the easiest way to open a session is via opening the file _lsdv_simulations.Rproj_.
+
+To install _lsdsim_ you will need to have _devtools_ installed on your computer
+and to be able to compile R packages from the source. You will also need to have
+the _reportfactory_ package installed. The latter will be handy to handle 
+dependencies of the Rmarkdown documents stored in _report_sources/_. 
+
+
+### Installing dependencies
+
+The following code should install all needed packages:
+
+```{r eval = FALSE}
+## install and load lsdsim
+if (!required(devtools)) install.packages("devtools")
+devtools::load_all()
+
+## install reportfactory, install Rmd deps
+if (!required(reportfactory)) install.packages("reportfactory")
+reportfactory::install_deps()
+
+```
+
+
+## Generating results
+
+### Published results
+
+Results presented in the initial publications are stored as:
+
+- _outputs/res_2025-12-29.qs_: R object storing summaries of 6,000 simulations
+- _outputs/simulations_final.html_: report of the 6,000 simulations
+
+
+### Generating new results
+
+The _reportfactory_ can be used to generate a report running simulations of epidemics with different types of responses, and storing the output in a time-stamped folder in _outputs/_. The sources of the report itself are in 
+_report_sources/simulations.Rmd_. Users can modify this report as they see fit, 
+or add a new report to the _report_sources_ folder to run new simulations.
+
+The _simulations.Rmd_ report has the following parameters:
+
+- n_rep: an `integer` indicating the number of replicates to generate; in our original study, we used 1,000, but beware that this will take hours to run on a standard desktop; defaults to 10
+- run_sim: a `logical` indicating whether new simulations should be run; if `FALSE`, the latest simulation results stored inside `outputs` will be used to generate the report; defaults to `TRUE`
+
+For instance, if you want to generate new results with 30 replicates, you can 
+type:
+
+```{r eval = FALSE}
+reportfactory::compile_reports(params = list(n_rep = 30, run_sim = TRUE))
+```
+```{r eval = FALSE, results = "markup"}
+>>> Compiling report: simulations
+      - with parameters: n_rep = 30, run_sim = TRUE
+All done!
+```
 
 
 
