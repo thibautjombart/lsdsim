@@ -14,9 +14,9 @@ supporting material is provided on this repository (folder *paper*).
 
 Direct links:
 
-- [manuscript](https://github.com/thibautjombart/lsdsim/blob/main/paper/manuscript_1.0.pdf)
+- [manuscript](https://raw.githubusercontent.com/thibautjombart/lsdsim/main/paper/manuscript_1.0.pdf)
 - [supporting
-  material](https://github.com/thibautjombart/lsdsim/blob/main/paper/supplementary_material.pdf)
+  material](https://raw.githubusercontent.com/thibautjombart/lsdsim/main/paper/supplementary_material.pdf)
 
 The repository also contains an an instance of
 [*reportfactory*](https://www.reconverse.org/reportfactory/) to run

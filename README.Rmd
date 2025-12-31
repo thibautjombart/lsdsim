@@ -13,8 +13,8 @@ This paper is currently under peer-review, and being processed on bioRxiv. Meanw
 
 Direct links:
 
-- [manuscript](https://github.com/thibautjombart/lsdsim/blob/main/paper/manuscript_1.0.pdf)
-- [supporting material](https://github.com/thibautjombart/lsdsim/blob/main/paper/supplementary_material.pdf)
+- [manuscript](https://raw.githubusercontent.com/thibautjombart/lsdsim/main/paper/manuscript_1.0.pdf)
+- [supporting material](https://raw.githubusercontent.com/thibautjombart/lsdsim/main/paper/supplementary_material.pdf)
 
 
 The repository also contains an an instance of [_reportfactory_](https://www.reconverse.org/reportfactory/) to run epidemic simulations in a reproducible way. 
