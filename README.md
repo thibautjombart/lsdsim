@@ -5,9 +5,19 @@ Thibaut Jombart
 
 This repository contains the **R** package *lsdsim* which implements a
 stochastic, meta-population compartmental model of Lumpy Skin Disease
-(LSD), including the simulation of different types of interventions.
+(LSD), including the simulation of different types of interventions. It
+supports the paper titled “*To cull or not to cull: a model-based
+evaluation of response strategies against Lumpy Skin Disease outbreaks*”
+by Jombart and Abbate (2025). This paper is currently under peer-review,
+and being processed on bioRxiv. Meanwhile, a copy of the manuscript and
+supporting material is provided on this repository (folder *paper*).
 
-It also contains an an instance of
+Direct links: -
+[manuscript](https://github.com/thibautjombart/lsdsim/blob/main/paper/manuscript_1.0.pdf) -
+[supporting
+material](https://github.com/thibautjombart/lsdsim/blob/main/paper/supplementary_material.pdf)
+
+The repository also contains an an instance of
 [*reportfactory*](https://www.reconverse.org/reportfactory/) to run
 epidemic simulations in a reproducible way.
 
