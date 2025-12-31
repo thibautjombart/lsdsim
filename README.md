@@ -99,3 +99,15 @@ reportfactory::compile_reports(params = list(n_rep = 30, run_sim = TRUE))
       - with parameters: n_rep = 30, run_sim = TRUE
 All done!
 ```
+
+## The *lsdsim* package
+
+The *lsdsim* package is still under development. At this stage:
+
+- it is decently unit-tested, with all core features including epidemic
+  spread and interventions all having automated tests; perfect test
+  coverage will be ensured later
+- documentation is largely lacking, but is underway
+- CRAN checks are not passing (mostly due to the lack of documentation)
+  but the package does install on current R versions
+- a list of all core functions of the package will be provided here
