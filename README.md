@@ -12,10 +12,11 @@ by Jombart and Abbate (2025). This paper is currently under peer-review,
 and being processed on bioRxiv. Meanwhile, a copy of the manuscript and
 supporting material is provided on this repository (folder *paper*).
 
-Direct links: -
-[manuscript](https://github.com/thibautjombart/lsdsim/blob/main/paper/manuscript_1.0.pdf) -
-[supporting
-material](https://github.com/thibautjombart/lsdsim/blob/main/paper/supplementary_material.pdf)
+Direct links:
+
+- [manuscript](https://github.com/thibautjombart/lsdsim/blob/main/paper/manuscript_1.0.pdf)
+- [supporting
+  material](https://github.com/thibautjombart/lsdsim/blob/main/paper/supplementary_material.pdf)
 
 The repository also contains an an instance of
 [*reportfactory*](https://www.reconverse.org/reportfactory/) to run
