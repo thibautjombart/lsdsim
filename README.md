@@ -102,12 +102,17 @@ All done!
 
 ## The *lsdsim* package
 
-The *lsdsim* package is still under development. At this stage:
+The *lsdsim* package was started around Christmas time to provide a
+platform for testing different responses to LSD epidemics, in the wake
+of mass culling imposed in France which led to protests and social
+unrest. In a nutshell: it works, all main features are unit-tested, but
+it is still under development. At this stage:
 
-- it is decently unit-tested, with all core features including epidemic
-  spread and interventions all having automated tests; perfect test
-  coverage will be ensured later
+- unit-testing covers all core features including epidemic spread and
+  interventions; full test coverage will be ensured later
 - documentation is largely lacking, but is underway
 - CRAN checks are not passing (mostly due to the lack of documentation)
   but the package does install on current R versions
 - a list of all core functions of the package will be provided here
+- continuous integration will be implemented via github actions
+- a dedicated website will be provided using *pkgdown*
