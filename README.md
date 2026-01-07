@@ -1,7 +1,7 @@
 A stochastic meta-population model of LSD epidemics
 ================
 Thibaut Jombart
-2025-12-31
+2026-01-07
 
 This repository contains the **R** package *lsdsim* which implements a
 stochastic, meta-population compartmental model of Lumpy Skin Disease
@@ -62,11 +62,11 @@ The following code should install all needed packages:
 
 ``` r
 ## install and load lsdsim
-if (!required(devtools)) install.packages("devtools")
+if (!require(devtools)) install.packages("devtools")
 devtools::load_all()
 
 ## install reportfactory, install Rmd deps
-if (!required(reportfactory)) install.packages("reportfactory")
+if (!require(reportfactory)) install.packages("reportfactory")
 reportfactory::install_deps()
 ```
 

@@ -55,11 +55,11 @@ The following code should install all needed packages:
 
 ```{r eval = FALSE}
 ## install and load lsdsim
-if (!required(devtools)) install.packages("devtools")
+if (!require(devtools)) install.packages("devtools")
 devtools::load_all()
 
 ## install reportfactory, install Rmd deps
-if (!required(reportfactory)) install.packages("reportfactory")
+if (!require(reportfactory)) install.packages("reportfactory")
 reportfactory::install_deps()
 
 ```
