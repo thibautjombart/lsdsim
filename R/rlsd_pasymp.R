@@ -4,7 +4,7 @@
 #' LSD using literature-driven parameters and beta distributions. See [rbeta()]
 #' for details on means and variances. . 
 #'
-#' @source 
+#' @source TBC
 #'
 #' @export
 #' @param n the number of values to draw
