@@ -1,0 +1,706 @@
+---
+title: "A stochastic meta-population model of LSDV epidemics"
+author: "Thibaut Jombart"
+params:
+  n_rep: 200
+  run_sim: TRUE
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  collapse = TRUE, 
+  fig.width = 8, 
+  fig.height = 6, 
+  dpi = 70
+  )
+```
+
+## Outline of the work
+
+In this report, we use a stochastic, meta-population SEIRCDV model to simulate 
+outbreaks of Lumpy skin disease virus. We contrast different response scenario:
+
+1. **baseline**: no response
+2. **cull_quarant_vacc scenario**: mass culling of infected farms, quarantine (local and ring), ring vaccination
+3. **quarant_vacc**: quarantine (local and ring) and vaccination (local and ring)
+4. **selcull_quarant_vacc**: selective culling (only individuals in $I$), quarantine (local and ring) and vaccination (local and ring)
+5. **selcull_quarant_vacc_insect scenario**: all but mass culling (selective culling, vaccination, quarantine, insecticide)
+6. **all**: all measures combined
+
+
+
+## Simulation setup
+
+### Required libraries
+
+We load required libraries:
+```{r}
+library(tidyverse)
+library(viridis)
+library(qs)
+library(here)
+library(digest)
+library(compiler)
+library(rio)
+library(cowplot)
+devtools::load_all()
+```
+
+## Population setting
+
+Our benchmark suggests simulations for 365 days become prohibitively slow for
+grid sizes exceeding 40 (_i.e._, 1600 farms). For the final simulation sets, we 
+aim for 1000 replicates in each setting, so we will use a grid size of 40.
+We assume a diffusion across neighbouring farms of 1%, _i.e._ 1% of 
+transmission moves to a different farm nearby.
+
+```{r}
+n_rep <- params$n_rep
+duration <- 365
+grid_size <- 40
+n_pop <- grid_size^2
+xy <- make_grid(grid_size)
+delta <- make_delta(xy, diffusion = 0.05)
+```
+
+The size of the farms, in number of herds, is drawn using an average herd size 
+of 50, exponentially distributed with a minimum at 20 individuals:
+```{r fig.width = 7, fig.height = 7}
+r_herd_size <- function(n) {
+  20 + round(rexp(nrow(xy), 1/30))
+}
+
+herd_size <- r_herd_size(1e4)
+hist(herd_size, border = "white", 
+     main = "Herd size distribution",
+     xlab = "Number of cows", 
+     nclass = 30, 
+     xlim = c(0, max(herd_size)))
+summary(herd_size)
+herds <- cbind.data.frame(xy, size = r_herd_size(n_pop))
+
+ggplot(herds, aes(x = x, y = y)) + 
+  geom_tile(aes(fill = size)) + 
+  theme_bw() + 
+  scale_fill_viridis_c("Herd size", n.breaks = 8) + 
+  labs(title = "Example of a meta-population")
+
+```
+
+In practice, every simulation will use a different population setting (randomly drawn herd sizes).
+
+## Simulations
+
+### General settings
+
+We set the number of replicates, which will apply to each simulation scenario.
+We also make a compiled version of `lsdsim` and set up initial conditions.
+
+```{r}
+fast_lsdsim <- compiler::cmpfun(lsdsim)
+```
+
+This function is used to generate one new case in a randomly chosen population, 
+to seed outbreaks:
+```{r}
+r_ini_case <- function(n_pop) {
+  out <- rep(0, n_pop)
+  out[sample.int(n_pop, 1)] <- 1
+  out
+}
+```
+
+Input parameters will be the same for different interventions:
+
+```{r }
+lsd_params <- rlsd_param(n_rep)
+head(lsd_params)
+
+list_herd_size <- lapply(1:n_rep, function(i) r_herd_size(n_pop))
+list_ini_cases <- lapply(1:n_rep, function(i) r_ini_case(n_pop))
+
+inputs <- tibble(
+  lsd_params, 
+  ini_S = list_herd_size,
+  ini_I = list_ini_cases
+)
+
+inputs$label <- apply(inputs, 1, function(e) substr(digest(e), 1, 8))
+```
+
+
+
+### *baseline* scenario: no response
+
+In these simulations, we use no response.
+
+```{r baseline, eval = params$run_sim}
+output_dir <- here::here("outputs", "simulations", "baseline", Sys.Date())
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
+
+res_baseline <- vector(mode = "list", length = n_rep)
+for (i in seq_len(n_rep)) {
+  ## run simulation
+  current_sim <- fast_lsdsim(
+    grid_size = grid_size, 
+    time = duration,
+    ini_S = unlist(inputs$ini_S[[i]]), 
+    ini_I = unlist(inputs$ini_I[[i]]),
+    delta = delta,
+    beta_A = inputs$beta_A[i],
+    beta_I = inputs$beta_I[i],
+    sigma = inputs$sigma[i],
+    gamma = inputs$gamma[i],
+    pasymp = inputs$pasymp[i],
+    cfr = inputs$cfr[i],
+    quarantine = FALSE,
+    vaccination = FALSE, 
+    mass_culling = FALSE, 
+    select_culling = FALSE,
+    insecticide = FALSE
+  )
+  
+  ## save full simulation to file
+  out_file <- file.path(
+    output_dir, 
+    paste0(inputs$label[i], "_baseline", ".qs")
+  )
+  qsave(current_sim, out_file)
+  
+  ## store summary
+  res_baseline[[i]] <- summary(current_sim)[duration, ]
+}
+
+res_baseline <- cbind(label = inputs$label, bind_rows(res_baseline))
+head(res_baseline)
+summary(res_baseline)
+
+qsave(res_baseline, file.path(output_dir, "summary.qs"))
+rio::export(res_baseline, file.path(output_dir, "summary.xlsx"))
+
+```
+
+
+
+
+### *cull_quarant_vacc* scenario: mass culling and ring vaccination
+
+In these simulations, we use:
+
+- mass culling of the affected herds
+- ring vaccination (i.e. vaccination of neighbours)
+
+```{r cull_quarant_vacc, eval = params$run_sim}
+output_dir <- here::here("outputs", "simulations", "cull_quarant_vacc", Sys.Date())
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
+
+res_cull_quarant_vacc <- vector(mode = "list", length = n_rep)
+for (i in seq_len(n_rep)) {
+  ## run simulation
+  current_sim <- fast_lsdsim(
+    grid_size = grid_size, 
+    time = duration,
+    ini_S = unlist(inputs$ini_S[[i]]), 
+    ini_I = unlist(inputs$ini_I[[i]]),
+    delta = delta,
+    beta_A = inputs$beta_A[i],
+    beta_I = inputs$beta_I[i],
+    sigma = inputs$sigma[i],
+    gamma = inputs$gamma[i],
+    pasymp = inputs$pasymp[i],
+    cfr = inputs$cfr[i],
+    quarantine = TRUE,
+    vaccination = TRUE, 
+    mass_culling = TRUE, 
+    select_culling = FALSE,
+    insecticide = FALSE,
+    interv_delay = 7,
+    interv_release = 28,
+    quarant_efficacy_in = 0.2,
+    quarant_efficacy_out = 0.9,
+    vacc_coverage = 1, 
+    vacc_efficacy = 0.65/21,
+    rate_cull = 0.5
+  )
+  
+  ## save full simulation to file
+  out_file <- file.path(
+    output_dir, 
+    paste0(inputs$label[i], "_cull_quarant_vacc", ".qs")
+  )
+  qsave(current_sim, out_file)
+  
+  ## store summary
+  res_cull_quarant_vacc[[i]] <- summary(current_sim)[duration, ]
+}
+
+res_cull_quarant_vacc <- cbind(label = inputs$label, bind_rows(res_cull_quarant_vacc))
+head(res_cull_quarant_vacc)
+summary(res_cull_quarant_vacc)
+
+qsave(res_cull_quarant_vacc, file.path(output_dir, "summary.qs"))
+rio::export(res_cull_quarant_vacc, file.path(output_dir, "summary.xlsx"))
+
+```
+
+
+
+### *quarant_vacc* scenario: quarantine and ring vaccination
+
+In these simulations, we use:
+
+- quarantine of infected herds and neighbours
+- vaccination of infected herds and neighbours
+
+```{r quarant_vacc, eval = params$run_sim}
+output_dir <- here::here("outputs", "simulations", "quarant_vacc", Sys.Date())
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
+
+res_quarant_vacc <- vector(mode = "list", length = n_rep)
+for (i in seq_len(n_rep)) {
+  ## run simulation
+  current_sim <- fast_lsdsim(
+    grid_size = grid_size, 
+    time = duration,
+    ini_S = unlist(inputs$ini_S[[i]]), 
+    ini_I = unlist(inputs$ini_I[[i]]),
+    delta = delta,
+    beta_A = inputs$beta_A[i],
+    beta_I = inputs$beta_I[i],
+    sigma = inputs$sigma[i],
+    gamma = inputs$gamma[i],
+    pasymp = inputs$pasymp[i],
+    cfr = inputs$cfr[i],
+    quarantine = TRUE,
+    vaccination = TRUE, 
+    mass_culling = FALSE, 
+    select_culling = FALSE,
+    insecticide = FALSE,
+    interv_delay = 7,
+    interv_release = 28,
+    quarant_efficacy_in = 0.2,
+    quarant_efficacy_out = 0.9,
+    vacc_coverage = 1, 
+    vacc_efficacy = 0.65/21
+  )
+  
+  ## save full simulation to file
+  out_file <- file.path(
+    output_dir, 
+    paste0(inputs$label[i], "_quarant_vacc", ".qs")
+  )
+  qsave(current_sim, out_file)
+  
+  ## store summary
+  res_quarant_vacc[[i]] <- summary(current_sim)[duration, ]
+}
+
+res_quarant_vacc <- cbind(label = inputs$label, bind_rows(res_quarant_vacc))
+head(res_quarant_vacc)
+summary(res_quarant_vacc)
+
+qsave(res_quarant_vacc, file.path(output_dir, "summary.qs"))
+rio::export(res_quarant_vacc, file.path(output_dir, "summary.xlsx"))
+
+```
+
+
+
+### *selcull_quarant_vacc* scenario: selective culling, quarantine and ring vaccination
+
+In these simulations, we use:
+
+- selective culling of infected individuals
+- quarantine of infected herds and neighbours
+- vaccination of infected herds and neighbours
+ 
+
+```{r selcull_quarant_vacc, eval = params$run_sim}
+output_dir <- here::here("outputs", "simulations", "quarant_vacc", Sys.Date())
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
+
+res_selcull_quarant_vacc <- vector(mode = "list", length = n_rep)
+for (i in seq_len(n_rep)) {
+  ## run simulation
+  current_sim <- fast_lsdsim(
+    grid_size = grid_size, 
+    time = duration,
+    ini_S = unlist(inputs$ini_S[[i]]), 
+    ini_I = unlist(inputs$ini_I[[i]]),
+    delta = delta,
+    beta_A = inputs$beta_A[i],
+    beta_I = inputs$beta_I[i],
+    sigma = inputs$sigma[i],
+    gamma = inputs$gamma[i],
+    pasymp = inputs$pasymp[i],
+    cfr = inputs$cfr[i],
+    quarantine = TRUE,
+    vaccination = TRUE, 
+    mass_culling = FALSE,
+    select_culling = TRUE,
+    insecticide = FALSE,
+    interv_delay = 7,
+    interv_release = 28,
+    quarant_efficacy_in = 0.2,
+    quarant_efficacy_out = 0.9,
+    vacc_coverage = 1, 
+    vacc_efficacy = 0.65/21, 
+    rate_cull = 1e30 # immediate culling
+  )
+  
+  ## save full simulation to file
+  out_file <- file.path(
+    output_dir, 
+    paste0(inputs$label[i], "_selcull_quarant_vacc", ".qs")
+  )
+  qsave(current_sim, out_file)
+  
+  ## store summary
+  res_selcull_quarant_vacc [[i]] <- summary(current_sim)[duration, ]
+}
+
+res_selcull_quarant_vacc  <- cbind(
+  label = inputs$label, 
+  bind_rows(res_selcull_quarant_vacc )
+)
+
+head(res_selcull_quarant_vacc )
+summary(res_selcull_quarant_vacc)
+
+qsave(res_selcull_quarant_vacc, file.path(output_dir, "summary.qs"))
+rio::export(res_selcull_quarant_vacc, file.path(output_dir, "summary.xlsx"))
+
+```
+
+
+### *selcull_quarant_vacc_insect* scenario: selective culling, quarantine, ring vaccination, insecticide (all but mass culling)
+
+In these simulations, we use:
+
+- selective culling of infected individuals
+- quarantine of infected herds and neighbours
+- vaccination of infected herds and neighbours
+- insecticide spray of infected herds and neighbours
+
+
+```{r selcull_quarant_vacc_insect, eval = params$run_sim}
+output_dir <- here::here("outputs", "simulations", "selcull_quarant_vacc_insect", Sys.Date())
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
+
+res_selcull_quarant_vacc_insect <- vector(mode = "list", length = n_rep)
+for (i in seq_len(n_rep)) {
+  ## run simulation
+  current_sim <- fast_lsdsim(
+    grid_size = grid_size, 
+    time = duration,
+    ini_S = unlist(inputs$ini_S[[i]]), 
+    ini_I = unlist(inputs$ini_I[[i]]),
+    delta = delta,
+    beta_A = inputs$beta_A[i],
+    beta_I = inputs$beta_I[i],
+    sigma = inputs$sigma[i],
+    gamma = inputs$gamma[i],
+    pasymp = inputs$pasymp[i],
+    cfr = inputs$cfr[i],
+    quarantine = TRUE,
+    vaccination = TRUE, 
+    mass_culling = FALSE,
+    select_culling = TRUE,
+    insecticide = TRUE,
+    interv_delay = 7,
+    interv_release = 28,
+    vacc_coverage = 1, 
+    vacc_efficacy = 0.65/21,
+    quarant_efficacy_in = 0.2,
+    quarant_efficacy_out = 0.9, 
+    rate_cull = 1e30,
+    insect_efficacy = 0.5
+  )
+  
+  ## save full simulation to file
+  out_file <- file.path(
+    output_dir, 
+    paste0(inputs$label[i], "_selcull_quarant_vacc_insect", ".qs")
+  )
+  qsave(current_sim, out_file)
+  
+  ## store summary
+  res_selcull_quarant_vacc_insect[[i]] <- summary(current_sim)[duration, ]
+}
+
+res_selcull_quarant_vacc_insect <- cbind(label = inputs$label, bind_rows(res_selcull_quarant_vacc_insect))
+head(res_selcull_quarant_vacc_insect)
+summary(res_selcull_quarant_vacc_insect)
+
+qsave(res_selcull_quarant_vacc_insect, file.path(output_dir, "summary.qs"))
+rio::export(res_selcull_quarant_vacc_insect, file.path(output_dir, "summary.xlsx"))
+
+```
+
+
+### all scenario: mass culling, quarantine, ring vaccination, insecticide
+
+In these simulations, we use mass culling, ring quarantine and vaccination, and insecticide spray.
+
+```{r all, eval = params$run_sim}
+output_dir <- here::here("outputs", "simulations", "all", Sys.Date())
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
+
+res_all <- vector(mode = "list", length = n_rep)
+for (i in seq_len(n_rep)) {
+  ## run simulation
+  current_sim <- fast_lsdsim(
+    grid_size = grid_size, 
+    time = duration,
+    ini_S = unlist(inputs$ini_S[[i]]), 
+    ini_I = unlist(inputs$ini_I[[i]]),
+    delta = delta,
+    beta_A = inputs$beta_A[i],
+    beta_I = inputs$beta_I[i],
+    sigma = inputs$sigma[i],
+    gamma = inputs$gamma[i],
+    pasymp = inputs$pasymp[i],
+    cfr = inputs$cfr[i],
+    quarantine = TRUE,
+    vaccination = TRUE, 
+    mass_culling = TRUE, 
+    select_culling = TRUE, # redundant with mass culling but for consistency
+    insecticide = TRUE,
+    interv_delay = 7,
+    interv_release = 28,
+    vacc_coverage = 1, 
+    vacc_efficacy = 0.65/21,
+    rate_cull = 0.5,
+    quarant_efficacy_in = 0.2,
+    quarant_efficacy_out = 0.9,
+    insect_efficacy = 0.5
+  )
+  
+  ## save full simulation to file
+  out_file <- file.path(
+    output_dir, 
+    paste0(inputs$label[i], "_all", ".qs")
+  )
+  qsave(current_sim, out_file)
+  
+  ## store summary
+  res_all[[i]] <- summary(current_sim)[duration, ]
+}
+
+res_all <- cbind(label = inputs$label, bind_rows(res_all))
+head(res_all)
+summary(res_all)
+
+qsave(res_all, file.path(output_dir, "summary.qs"))
+rio::export(res_all, file.path(output_dir, "summary.xlsx"))
+
+```
+
+
+
+## Analyses
+
+```{r eval = params$run_sim}
+res_baseline$scenario <- "baseline"
+res_cull_quarant_vacc$scenario <- "cull_quarant_vacc"
+res_quarant_vacc$scenario <- "quarant_vacc"
+res_selcull_quarant_vacc$scenario <- "selcull_quarant_vacc"
+res_selcull_quarant_vacc_insect$scenario <- "selcull_quarant_vacc_insect"
+res_all$scenario <- "all"
+
+res <- bind_rows(
+  res_baseline, 
+  res_cull_quarant_vacc, 
+  res_quarant_vacc, 
+  res_selcull_quarant_vacc,
+  res_selcull_quarant_vacc_insect,
+  res_all
+  ) %>% 
+  select(scenario, everything()) %>% 
+  mutate(
+    p_immun = (R + V) / N,
+    p_dead = (D + C) / (N + D + C), 
+    scenario = factor(
+      scenario, levels = c(
+        "baseline", 
+        "cull_quarant_vacc", 
+        "quarant_vacc",
+        "selcull_quarant_vacc",
+        "selcull_quarant_vacc_insect",
+        "all")
+      )
+  )
+
+file_name <- paste0("res_", Sys.Date(), ".qs")
+qsave(res, here::here("outputs", file_name))
+
+```
+
+This is evaluated only if new results have not been obtained, fetching the 
+latest version of the results:
+```{r eval = !params$run_sim}
+all_files <- list.files(here::here("outputs"), pattern = "^res")
+extract_date <- function(x) {
+  out <- gsub("[^[:digit:]-]", "", x)
+  as.Date(out)
+}
+dates <- sapply(all_files, extract_date)
+to_keep <- which.max(dates)
+file_to_keep <- all_files[to_keep]
+file_to_keep
+message("reading results from file:", file_to_keep)
+res <- qread(here::here("outputs", file_to_keep))
+```
+
+
+
+```{r out.width = "100%"}
+label_numbers <- function(x, show_1_as_0 = FALSE) {
+  out <- scales::label_number(scale_cut = scales::cut_long_scale())(x)
+  if (show_1_as_0) {
+    out[out=="1"] <- "0"
+  }
+  out
+}
+
+p_cases <- ggplot(res, aes(x = scenario, y = total_cases)) + 
+  geom_violin(scale = "width", fill = "#F5275E", alpha = 0.65) + 
+  scale_y_continuous(
+    transform = "log10", 
+    labels = function(e) label_numbers(e, show_1_as_0 = TRUE)
+  ) + 
+  theme_bw() + 
+  labs(
+    x = "",
+    y = "Total cases"
+  )
+
+p_n_pop <- ggplot(res, aes(x = scenario, y = n_pop_ever_infec)) + 
+  geom_violin(scale = "width", fill = "#F5275E", alpha = 0.65) + 
+  scale_y_continuous(
+    transform = "log10", 
+    labels = function(e) label_numbers(e, show_1_as_0 = TRUE)
+  ) + 
+  theme_bw() + 
+  labs(
+    x = "",
+    y = "Number of\nfarms affected"
+    )
+
+
+p_immun <- ggplot(res, aes(x = scenario, y = p_immun)) + 
+  geom_violin(scale = "width", fill = "#F5275E", alpha = 0.65) + 
+  theme_bw() + 
+  labs(
+    x = "",
+    y = "Proportion of\nimmunized cattles"
+    )
+
+p_dead <- ggplot(res, aes(x = scenario, y = (D+C))) + 
+  geom_violin(scale = "width", fill = "#F5275E", alpha = 0.65) + 
+  scale_y_continuous(
+    transform = "log10", 
+    labels = function(e) label_numbers(e, show_1_as_0 = TRUE)
+  ) + 
+  theme_bw() + 
+  labs(
+    x = "",
+    y = "Number of\ndead cattles"
+  )
+
+rotated_x <- theme(
+  axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)
+  )
+
+plot_grid(
+  p_cases + rotated_x, 
+  p_n_pop + rotated_x,
+  p_immun + rotated_x, 
+  p_dead + rotated_x,
+  labels = LETTERS[1:4]
+)
+
+```
+
+Some summary statistics:
+```{r}
+# f_smry <- function(x) {
+#   out <- c(
+#     mean = mean(x), 
+#     median = median(x), 
+#     CI_95 = sprintf("[%f;%f]", 
+#                     quantile(x, 0.025), 
+#                     quantile(x, 0.975)
+#                     )
+#   )
+# }
+
+# total cases
+res %>% 
+  group_by(scenario) %>% 
+  summarise(
+    mean_cases = mean(total_cases) %>% label_numbers(), 
+    median_cases = median(total_cases) %>% label_numbers(), 
+    cases_0.025 = quantile(total_cases, 0.025) %>% label_numbers(),
+    cases_0.975 = quantile(total_cases, 0.975) %>% label_numbers(),
+    p_greater_100_cases = mean(total_cases >= 100) 
+  ) %>% 
+  knitr::kable(digits = 4)
+
+# attack rates
+res %>% 
+  group_by(scenario) %>% 
+  summarise(
+    mean_ar = mean(ar), 
+    median_ar = median(ar), 
+    ar_0.025 = quantile(ar, 0.025),
+    ar_0.975 = quantile(ar, 0.975)
+  ) %>% 
+  knitr::kable(digits = 4)
+  
+# deaths
+res %>% 
+  group_by(scenario) %>% 
+  summarise(
+    mean_deaths = mean(C+D) %>% label_numbers(), 
+    median_deaths = median(C+D) %>% label_numbers(), 
+    deaths_0.025 = quantile(C+D, 0.025) %>% label_numbers(),
+    deaths_0.975 = quantile(C+D, 0.975) %>% label_numbers()
+  ) %>% 
+  knitr::kable()
+
+# farms affected
+res %>% 
+  group_by(scenario) %>% 
+  summarise(
+    mean_farms = mean(n_pop_ever_infec),
+    median_farms = median(n_pop_ever_infec),
+    farms_0.025 = quantile(n_pop_ever_infec, 0.025),
+    farms_0.975 = quantile(n_pop_ever_infec, 0.975)
+    ) %>% 
+  knitr::kable(digits = 2)
+
+```
+
+
+
+
+
