@@ -8,10 +8,8 @@
 #'
 #' @export
 #' @param n the number of values to draw
-#' @param shape1 the first shape parameter of the beta distribution; defaults to
-#' 100
-#' @param shape2 the second shape parameter of the beta distribution; defaults to
-#' 100
+#' @param mu the mean of the distribution; defaults to 0.5
+#' @param sd the standard deviation of the distribution; defaults to 0.05
 #' @author Thibaut Jombart \email{thibautjombart@@gmail.com}
 #' @examples
 #' 
@@ -21,6 +19,7 @@
 #'   xlab = "P (asymptomatic)"
 #' )
 #' 
-rlsd_pasymp <- function(n, shape1 = 100, shape2 = 100) {
-  rbeta(n, shape1, shape2)
+rlsd_pasymp <- function(n, mu = 0.5, sd = 0.05) {
+  params <- beta_musd_to_shapes(mu, sd)
+  rbeta(n, params$shape1, params$shape2)
 }

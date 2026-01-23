@@ -17,16 +17,14 @@ disease outbreaks in Turkey during 2014-2015. Transbound Emerg Dis.
 2017;64: 1268–1279.
 }
 \usage{
-rlsd_cfr(n, shape1 = 30, shape2 = 970)
+rlsd_cfr(n, mu = 0.03, sd = 0.05)
 }
 \arguments{
 \item{n}{the number of values to draw}
 
-\item{shape1}{the first shape parameter of the beta distribution; defaults to
-50}
+\item{mu}{the mean of the distribution; defaults to 0.03}
 
-\item{shape2}{the second shape parameter of the beta distribution; defaults
-to 950}
+\item{sd}{the standard deviation of the distribution; defaults to 0.05}
 }
 \description{
 This random number generator draws average case fatality ratio (CFR) for LSD

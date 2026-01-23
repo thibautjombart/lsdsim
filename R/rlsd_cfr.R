@@ -20,16 +20,15 @@
 #'
 #' @export
 #' @param n the number of values to draw
-#' @param shape1 the first shape parameter of the beta distribution; defaults to
-#'   50
-#' @param shape2 the second shape parameter of the beta distribution; defaults
-#'   to 950
+#' @param mu the mean of the distribution; defaults to 0.03
+#' @param sd the standard deviation of the distribution; defaults to 0.05
 #' @author Thibaut Jombart \email{thibautjombart@@gmail.com}
 #' @examples
 #'
 #' hist(rlsd_cfr(1e5), main = "CFR of LSD", xlab = "Proportion of deaths")
 #' 
-rlsd_cfr <- function(n, shape1 = 30, shape2 = 970) {
-  rbeta(n, shape1, shape2)
+rlsd_cfr <- function(n, mu = 0.03, sd = 0.05) {
+  params <- beta_musd_to_shapes(mu, sd)
+  rbeta(n, params$shape1, params$shape2)
 }
 

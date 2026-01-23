@@ -7,16 +7,14 @@
 TBC
 }
 \usage{
-rlsd_pasymp(n, shape1 = 100, shape2 = 100)
+rlsd_pasymp(n, mu = 0.5, sd = 0.05)
 }
 \arguments{
 \item{n}{the number of values to draw}
 
-\item{shape1}{the first shape parameter of the beta distribution; defaults to
-100}
+\item{mu}{the mean of the distribution; defaults to 0.5}
 
-\item{shape2}{the second shape parameter of the beta distribution; defaults to
-100}
+\item{sd}{the standard deviation of the distribution; defaults to 0.05}
 }
 \description{
 This random number generator draws the proportion of asymptomatic cases for
