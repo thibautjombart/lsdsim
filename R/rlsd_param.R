@@ -51,7 +51,7 @@ rlsd_param <- function(n) {
     latent = rlsd_latent(n),
     infec_period = rlsd_infec_period(n),
     cfr = rlsd_cfr(n), 
-    apsym = rlsd_pasymp(n) 
+    pasymp = rlsd_pasymp(n) 
   )
 
   out$beta_I <- out$R0_I / out$infec_period

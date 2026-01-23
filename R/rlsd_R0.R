@@ -30,12 +30,12 @@
 #' hist(rlsd_R0_A(1e5), main = "R0 for asymptomatic cases", xlab = "R0")
 #' par(opar)
 #' 
-rlsd_R0_I <- function(n, mu = 9.7, sd = 0.05) {
+rlsd_R0_I <- function(n, mu = 20, sd = 0.02) {
   rlnorm(n, meanlog = log(mu), sdlog = sd)
 }
 
 #' @rdname rlsd_R0
 #' @export
-rlsd_R0_A <- function(n, mu = 1.2, sd = 0.1) {
+rlsd_R0_A <- function(n, mu = 2, sd = 0.1) {
   rlnorm(n, meanlog = log(mu), sdlog = sd)
 }
