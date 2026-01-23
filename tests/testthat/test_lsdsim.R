@@ -1,13 +1,13 @@
 test_that(
   "lsdsim output has the right dimensions", {
     res <- lsdsim()
-    expect_equal(dim(res), c(365, 10))
+    expect_equal(dim(res), c(365, 11))
     
     res <- lsdsim(time = 1)
-    expect_equal(dim(res), c(1, 10))
+    expect_equal(dim(res), c(1, 11))
     
     res <- lsdsim(time = 10, grid_size = 5)
-    expect_equal(dim(res), c(10, 10*5*5))
+    expect_equal(dim(res), c(10, 11*5*5))
   }
 )
 
@@ -17,7 +17,7 @@ test_that(
   "lsdsim output has the right column names", {
     res <- lsdsim(time = 10, grid_size = 2)
     exp_names <- lapply(
-      c("S", "E", "I", "C", "D", "R", "V", "N", "new_I","status"), 
+      c("S", "E", "A", "I", "C", "D", "R", "V", "N", "new_I","status"), 
       paste, 1:4, sep = "_")
     exp_names <- unlist(exp_names)
     expect_equal(colnames(res), exp_names)
@@ -38,7 +38,7 @@ test_that(
   "no further infection when beta = 0", {
     res <- lsdsim(time = 10, grid_size = 2, 
                   ini_S = 5000, ini_I = 100, 
-                  beta = 0, # no infection
+                  beta_I = 0, # no infection
                   gamma = 1e30 # immediately leaving I
                   )
     I <- res[, grep("I_", colnames(res))]
@@ -54,9 +54,10 @@ test_that(
   "all infected when beta is high", {
     res <- lsdsim(time = 10, grid_size = 3, 
                   ini_S = 5000, ini_I = 1, 
-                  beta = 1e30, # super high infection
+                  beta_I = 1e30, # super high infection
                   sigma = 1e30, # super fast E->I
-                  gamma = 0 # no leaving I
+                  gamma = 0, # no leaving I
+                  pasymp = 0 # no asymptomatic
     )
     E <- res[, grep("^E_", colnames(res))]
     I <- res[, grep("^I_", colnames(res))]
@@ -73,9 +74,10 @@ test_that(
   "infections do not spread when no diffusion", {
     res <- lsdsim(time = 10, grid_size = 3, 
                   ini_S = 5000, ini_I = c(1, rep(0, 8)), 
-                  beta = 1e30, # super high infection
+                  beta_I = 1e30, # super high infection
                   sigma = 1e30, # super fast E->I
-                  gamma = 0 # no leaving I
+                  gamma = 0, # no leaving I
+                  pasymp = 0 # no asymptomatic
     )
     I <- res[, grep("^I_", colnames(res))]
  
@@ -90,10 +92,11 @@ test_that(
   "infections spread with diffusion", {
     res <- lsdsim(time = 10, grid_size = 3, 
                   ini_S = 5000, ini_I = c(1, rep(0, 8)), 
-                  beta = 1e30, # super high infection
+                  beta_I = 1e30, # super high infection
                   sigma = 1e30, # super fast E->I
                   gamma = 0, # no leaving I
-                  diffusion = 0.1 # 10% diffusion
+                  diffusion = 0.1, # 10% diffusion
+                  pasymp = 0 # no asymptomatic
     )
     I <- res[, grep("^I_", colnames(res))]
    
@@ -108,11 +111,12 @@ test_that(
     res <- lsdsim(time = 10, grid_size = 10, 
                   ini_S = 1e5, 
                   ini_I = c(10, rep(0, 8)), 
-                  beta = 1e30, # super high infection
+                  beta_I = 1e30, # super high infection
                   sigma = 1e30, # super fast E->I
                   gamma = 1e30, # super fast I->...
                   cfr = 0.4, # 40% mortality
-                  diffusion = 0.1 # 10% diffusion
+                  diffusion = 0.1, # 10% diffusion
+                  pasymp = 0 # no asymptomatic
     )
     R <- res[, grep("R_", colnames(res))]
     D <- res[, grep("D_", colnames(res))]
@@ -149,9 +153,10 @@ test_that(
                   ini_S = 1e5, 
                   ini_I = c(1, rep(0, 9)),
                   gamma = 1e30, # immediately leaving I
-                  beta = 0, # no transmission beyond first case
+                  beta_I = 0, # no transmission beyond first case
                   interv_delay = 4, # response 4 days after 1st case
-                  interv_release = 10 # response stops 10 days after last case
+                  interv_release = 10, # response stops 10 days after last case
+                  pasymp = 0 # no asymptomatic
     )
     
     status <- res[, grep("status_", colnames(res))]
@@ -184,10 +189,11 @@ test_that(
                   ini_S = 100, 
                   ini_I = ini_I,
                   gamma = 1e30, # fast leaving I
-                  beta = 0, # no transmission beyond first case
+                  beta_I = 0, # no transmission beyond first case
                   interv_delay = 2, # response 4 days after 1st case
                   interv_release = 3, # response stops 10 days after last case)
-                  diffusion = 0.01
+                  diffusion = 0.01,
+                  pasymp = 0 # no asymptomatic
     )
     status <- res[, grep("status_", colnames(res))]
     expected_response <- ini_I > 0
@@ -209,7 +215,7 @@ test_that(
                   ini_V = c(123, rep(0, 8)),
                   sigma = 0, # no leaving E
                   gamma = 0, # no leaving I
-                  beta = 0, # no transmission beyond first case
+                  beta_I = 0, # no transmission beyond first case
                   mass_culling = TRUE,
                   interv_delay = 4, # response 4 days after 1st case
                   interv_release = 10 # response stops 10 days after last case
@@ -236,12 +242,13 @@ test_that(
     res <- lsdsim(time = 20, grid_size = 3, 
                   ini_S = 1000, 
                   ini_E = c(10, rep(0, 8)),
+                  ini_A = c(4, rep(0, 8)),
                   ini_I = c(8, rep(0, 8)),
                   ini_R = c(5, rep(0, 8)),
                   ini_V = c(123, rep(0, 8)),
                   sigma = 0, # no leaving E
                   gamma = 0, # no leaving I
-                  beta = 0, # no transmission beyond first case
+                  beta_I = 0, # no transmission beyond first case
                   select_culling = TRUE,
                   rate_cull = 1000, # immediate kill of all infected cattles once in response
                   interv_delay = 4, # response 4 days after 1st case
@@ -257,6 +264,7 @@ test_that(
     expect_true(all(C[5:20, 1] == 8))
     expect_equal(res[, "S_1"], rep(1000, 20))
     expect_equal(res[, "E_1"], rep(10, 20))
+    expect_equal(res[, "A_1"], rep(4, 20))
     expect_equal(res[, "I_1"], rep(c(8, 0), c(4, 16)))
     expect_equal(res[, "R_1"], rep(5, 20))
     expect_equal(res[, "V_1"], rep(123, 20))
@@ -272,7 +280,7 @@ test_that(
                   ini_V = 0,
                   ini_I = 1,
                   interv_delay = 1, 
-                  beta = 0,
+                  beta_I = 0,
                   vaccination = TRUE,
                   vacc_coverage = 0.1, # 10% vaccination per day
                   vacc_efficacy = 0.5 # 50% efficacy
@@ -305,8 +313,9 @@ test_that(
                   quarant_efficacy_out = 0, # no reduction in outwards transmission
                   sigma = 1e30, # fast E->I
                   gamma = 0, # no leaving I
-                  beta = 10,
-                  diffusion = 0.1 # 10% diffusion of infection
+                  beta_I = 10,
+                  diffusion = 0.1, # 10% diffusion of infection
+                  pasymp = 0 # no asymptomatic
     )
     
     I <- res[, grep("^I_", colnames(res))]
@@ -323,8 +332,9 @@ test_that(
                   quarant_efficacy_out = 1, # no outwards transmission
                   sigma = 1/14, # E->I in about 14 days
                   gamma = 1/7, # disease lasts about 7 days
-                  beta = 10,
-                  diffusion = 0.01 # 1% diffusion of infection
+                  beta_I = 10,
+                  diffusion = 0.01, # 1% diffusion of infection
+                  pasymp = 0 # no asymptomatic
     )
     
     I <- res[, grep("^I_", colnames(res))]
@@ -345,8 +355,9 @@ test_that(
                   quarant_efficacy_out = 0, # no outwards transmission
                   sigma = 1/14, # E->I in about 14 days
                   gamma = 0, # no leaving I
-                  beta = 10,
-                  diffusion = 0.01 # 1% diffusion of infection
+                  beta_I = 10,
+                  diffusion = 0.01, # 1% diffusion of infection
+                  pasymp = 0 # no asymptomatic
     )
     
     I <- res[, grep("^I_", colnames(res))]
@@ -373,7 +384,7 @@ test_that(
                   insect_efficacy = 1,
                   sigma = 1e30, # fast E->I
                   gamma = 0, # no leaving I
-                  beta = 1,
+                  beta_I = 1,
                   diffusion = 0.1 # 10% diffusion of infection
     )
     
