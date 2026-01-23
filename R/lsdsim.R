@@ -11,7 +11,8 @@
 lsdsim <- function(
     grid_size = 1,
     time = 365,
-    beta = 0.1, # density-dependent infection rate
+    beta_I = 0.1, # infection rate for I
+    beta_A = 0.01, # infection rate for A
     sigma = 1/7, # inv. latent period
     gamma = 1/20, # inv. duration of infection
     cfr = 0.1, # case fatality ratio
@@ -178,20 +179,29 @@ lsdsim <- function(
     }
    
     if (insecticide) {
-       current_beta <- rep(beta, n_pop)
-       current_beta[id_pop_response_and_ring] <- current_beta[id_pop_response_and_ring] * (1 - insect_efficacy)
+       current_beta_I <- rep(beta_I, n_pop)
+       current_beta_I[id_pop_response_and_ring] <- 
+         current_beta_I[id_pop_response_and_ring] * (1 - insect_efficacy)
+       
+       current_beta_A <- rep(beta_A, n_pop)
+       current_beta_A[id_pop_response_and_ring] <- 
+         current_beta_A[id_pop_response_and_ring] * (1 - insect_efficacy)
     } else {
-      current_beta <- beta
+      current_beta_I <- beta_I
+      current_beta_A <- beta_A
     }
     
     
     ## individuals leaving S...
-    ## - to E (new infections)
-    ## - to V (vaccination)
-    ## (mass_culling will be handled separately)
-      
+    ## - to be infected (E)
+    ## - to be vaccinated (V)
+    ## - to be culled (C)
+    ##
     ## nested binomials are used to decide where individuals leaving S go
-    rate_S_E <- as.vector(delta %*% (current_beta * I[t, ] / N[t, ]))
+    rate_S_E <- as.vector(
+      delta %*% ((current_beta_I * I[t, ] + current_beta_A * A[t, ]) / N[t, ])
+    )
+    
     rate_S_E[is.na(rate_S_E)] <- 0 # for populations where N = 0
     rate_S_out <- rate_S_E + rate_S_V + rate_into_C
     p_S_out <- 1 - exp(-rate_S_out)
