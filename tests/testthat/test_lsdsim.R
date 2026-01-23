@@ -52,12 +52,13 @@ test_that(
 
 test_that(
   "all infected when beta is high", {
-    res <- lsdsim(time = 10, grid_size = 3, 
-                  ini_S = 5000, ini_I = 1, 
-                  beta_I = 1e30, # super high infection
-                  sigma = 1e30, # super fast E->I
-                  gamma = 0, # no leaving I
-                  pasymp = 0 # no asymptomatic
+    res <- lsdsim(
+      time = 10, grid_size = 3, 
+      ini_S = 5000, ini_I = 1, 
+      beta_I = 1e30, # super high infection
+      sigma = 1e30, # super fast E->I
+      gamma = 0, # no leaving I
+      pasymp = 0 # no asymptomatic
     )
     E <- res[, grep("^E_", colnames(res))]
     I <- res[, grep("^I_", colnames(res))]
@@ -72,15 +73,16 @@ test_that(
 
 test_that(
   "infections do not spread when no diffusion", {
-    res <- lsdsim(time = 10, grid_size = 3, 
-                  ini_S = 5000, ini_I = c(1, rep(0, 8)), 
-                  beta_I = 1e30, # super high infection
-                  sigma = 1e30, # super fast E->I
-                  gamma = 0, # no leaving I
-                  pasymp = 0 # no asymptomatic
+    res <- lsdsim(
+      time = 10, grid_size = 3, 
+      ini_S = 5000, ini_I = c(1, rep(0, 8)), 
+      beta_I = 1e30, # super high infection
+      sigma = 1e30, # super fast E->I
+      gamma = 0, # no leaving I
+      pasymp = 0 # no asymptomatic
     )
     I <- res[, grep("^I_", colnames(res))]
- 
+    
     expect_true(all(I[3:10, 1] == 5001))
     expect_true(all(I[, -1] == 0))
     
@@ -108,15 +110,16 @@ test_that(
 
 test_that(
   "deaths are within expected ratios", {
-    res <- lsdsim(time = 10, grid_size = 10, 
-                  ini_S = 1e5, 
-                  ini_I = c(10, rep(0, 8)), 
-                  beta_I = 1e30, # super high infection
-                  sigma = 1e30, # super fast E->I
-                  gamma = 1e30, # super fast I->...
-                  cfr = 0.4, # 40% mortality
-                  diffusion = 0.1, # 10% diffusion
-                  pasymp = 0 # no asymptomatic
+    res <- lsdsim(
+      time = 10, grid_size = 10, 
+      ini_S = 1e5, 
+      ini_I = c(10, rep(0, 8)), 
+      beta_I = 1e30, # super high infection
+      sigma = 1e30, # super fast E->I
+      gamma = 1e30, # super fast I->...
+      cfr = 0.4, # 40% mortality
+      diffusion = 0.1, # 10% diffusion
+      pasymp = 0 # no asymptomatic
     )
     R <- res[, grep("R_", colnames(res))]
     D <- res[, grep("D_", colnames(res))]
@@ -129,11 +132,12 @@ test_that(
 
 test_that(
   "response triggers when it should", {
-    res <- lsdsim(time = 20, grid_size = 3, 
-                  ini_S = 1e5, 
-                  ini_I = c(1, rep(0, 9)),
-                  interv_delay = 14, # response 14 days after 1st case
-                  interv_release = 1e6 # response stays on
+    res <- lsdsim(
+      time = 20, grid_size = 3, 
+      ini_S = 1e5, 
+      ini_I = c(1, rep(0, 9)),
+      interv_delay = 14, # response 14 days after 1st case
+      interv_release = 1e6 # response stays on
     )
     
     status <- res[, grep("status_", colnames(res))]
@@ -149,14 +153,15 @@ test_that(
 
 test_that(
   "response stops when it should", {
-    res <- lsdsim(time = 20, grid_size = 3, 
-                  ini_S = 1e5, 
-                  ini_I = c(1, rep(0, 9)),
-                  gamma = 1e30, # immediately leaving I
-                  beta_I = 0, # no transmission beyond first case
-                  interv_delay = 4, # response 4 days after 1st case
-                  interv_release = 10, # response stops 10 days after last case
-                  pasymp = 0 # no asymptomatic
+    res <- lsdsim(
+      time = 20, grid_size = 3, 
+      ini_S = 1e5, 
+      ini_I = c(1, rep(0, 9)),
+      gamma = 1e30, # immediately leaving I
+      beta_I = 0, # no transmission beyond first case
+      interv_delay = 4, # response 4 days after 1st case
+      interv_release = 10, # response stops 10 days after last case
+      pasymp = 0 # no asymptomatic
     )
     
     status <- res[, grep("status_", colnames(res))]
@@ -184,16 +189,17 @@ test_that(
     
     ini_I <- rep(0, 16)
     ini_I[c(1, 5, 8)] <- 1
-    res <- lsdsim(time = 10, 
-                  grid_size = 4, 
-                  ini_S = 100, 
-                  ini_I = ini_I,
-                  gamma = 1e30, # fast leaving I
-                  beta_I = 0, # no transmission beyond first case
-                  interv_delay = 2, # response 4 days after 1st case
-                  interv_release = 3, # response stops 10 days after last case)
-                  diffusion = 0.01,
-                  pasymp = 0 # no asymptomatic
+    res <- lsdsim(
+      time = 10, 
+      grid_size = 4, 
+      ini_S = 100, 
+      ini_I = ini_I,
+      gamma = 1e30, # fast leaving I
+      beta_I = 0, # no transmission beyond first case
+      interv_delay = 2, # response 4 days after 1st case
+      interv_release = 3, # response stops 10 days after last case)
+      diffusion = 0.01,
+      pasymp = 0 # no asymptomatic
     )
     status <- res[, grep("status_", colnames(res))]
     expected_response <- ini_I > 0
@@ -207,18 +213,19 @@ test_that(
 
 test_that(
   "mass culling works as expected", {
-    res <- lsdsim(time = 20, grid_size = 3, 
-                  ini_S = 1000, 
-                  ini_E = c(10, rep(0, 8)),
-                  ini_I = c(8, rep(0, 8)),
-                  ini_R = c(5, rep(0, 8)),
-                  ini_V = c(123, rep(0, 8)),
-                  sigma = 0, # no leaving E
-                  gamma = 0, # no leaving I
-                  beta_I = 0, # no transmission beyond first case
-                  mass_culling = TRUE,
-                  interv_delay = 4, # response 4 days after 1st case
-                  interv_release = 10 # response stops 10 days after last case
+    res <- lsdsim(
+      time = 20, grid_size = 3, 
+      ini_S = 1000, 
+      ini_E = c(10, rep(0, 8)),
+      ini_I = c(8, rep(0, 8)),
+      ini_R = c(5, rep(0, 8)),
+      ini_V = c(123, rep(0, 8)),
+      sigma = 0, # no leaving E
+      gamma = 0, # no leaving I
+      beta_I = 0, # no transmission beyond first case
+      mass_culling = TRUE,
+      interv_delay = 4, # response 4 days after 1st case
+      interv_release = 10 # response stops 10 days after last case
     )
     
     C <- res[, grep("C_", colnames(res))]
@@ -239,20 +246,22 @@ test_that(
 
 test_that(
   "selective culling works as expected", {
-    res <- lsdsim(time = 20, grid_size = 3, 
-                  ini_S = 1000, 
-                  ini_E = c(10, rep(0, 8)),
-                  ini_A = c(4, rep(0, 8)),
-                  ini_I = c(8, rep(0, 8)),
-                  ini_R = c(5, rep(0, 8)),
-                  ini_V = c(123, rep(0, 8)),
-                  sigma = 0, # no leaving E
-                  gamma = 0, # no leaving I
-                  beta_I = 0, # no transmission beyond first case
-                  select_culling = TRUE,
-                  rate_cull = 1000, # immediate kill of all infected cattles once in response
-                  interv_delay = 4, # response 4 days after 1st case
-                  interv_release = 10 # response stops 10 days after last case
+    res <- lsdsim(
+      time = 20, grid_size = 3, 
+      ini_S = 1000, 
+      ini_E = c(10, rep(0, 8)),
+      ini_A = c(4, rep(0, 8)),
+      ini_I = c(8, rep(0, 8)),
+      ini_R = c(5, rep(0, 8)),
+      ini_V = c(123, rep(0, 8)),
+      sigma = 0, # no leaving E
+      gamma = 0, # no leaving A/I
+      beta_I = 0, # no transmission beyond first case
+      beta_A = 0,
+      select_culling = TRUE,
+      rate_cull = 1000, # immediate kill of all infected cattles once in response
+      interv_delay = 4, # response 4 days after 1st case
+      interv_release = 10 # response stops 10 days after last case
     )
     
     C <- res[, grep("C_", colnames(res))]
@@ -275,15 +284,16 @@ test_that(
 
 test_that(
   "vaccination works as expected", {
-    res <- lsdsim(time = 10, grid_size = 10, 
-                  ini_S = 1e5, 
-                  ini_V = 0,
-                  ini_I = 1,
-                  interv_delay = 1, 
-                  beta_I = 0,
-                  vaccination = TRUE,
-                  vacc_coverage = 0.1, # 10% vaccination per day
-                  vacc_efficacy = 0.5 # 50% efficacy
+    res <- lsdsim(
+      time = 10, grid_size = 10, 
+      ini_S = 1e5, 
+      ini_V = 0,
+      ini_I = 1,
+      interv_delay = 1, 
+      beta_I = 0,
+      vaccination = TRUE,
+      vacc_coverage = 0.1, # 10% vaccination per day
+      vacc_efficacy = 0.5 # 50% efficacy
     )
     
     S <- res[, grep("S_", colnames(res))]
@@ -304,18 +314,19 @@ test_that(
     ## expectation: 
     ## infection spreads everywhere, last step is all I
     set.seed(1)
-    res <- lsdsim(grid_size = 3, time = 20, 
-                  ini_S = 1e4,
-                  ini_I = c(1, rep(0, 8)),
-                  interv_delay = 1, # intervention 1 day after 1st case
-                  quarantine = TRUE, 
-                  quarant_efficacy_in = 0, # no effect of quarantine isinde farm
-                  quarant_efficacy_out = 0, # no reduction in outwards transmission
-                  sigma = 1e30, # fast E->I
-                  gamma = 0, # no leaving I
-                  beta_I = 10,
-                  diffusion = 0.1, # 10% diffusion of infection
-                  pasymp = 0 # no asymptomatic
+    res <- lsdsim(
+      grid_size = 3, time = 20, 
+      ini_S = 1e4,
+      ini_I = c(1, rep(0, 8)),
+      interv_delay = 1, # intervention 1 day after 1st case
+      quarantine = TRUE, 
+      quarant_efficacy_in = 0, # no effect of quarantine isinde farm
+      quarant_efficacy_out = 0, # no reduction in outwards transmission
+      sigma = 1e30, # fast E->I
+      gamma = 0, # no leaving I
+      beta_I = 10,
+      diffusion = 0.1, # 10% diffusion of infection
+      pasymp = 0 # no asymptomatic
     )
     
     I <- res[, grep("^I_", colnames(res))]
@@ -324,17 +335,18 @@ test_that(
     ## expectation: 
     ## infection does not spread due to quarantine stopping all outwards 
     ## transmissions
-    res <- lsdsim(grid_size = 3, time = 20, 
-                  ini_S = 1e4,
-                  ini_I = c(1, rep(0, 8)),
-                  interv_delay = 1, # intervention 1 day after 1st case
-                  quarantine = TRUE,
-                  quarant_efficacy_out = 1, # no outwards transmission
-                  sigma = 1/14, # E->I in about 14 days
-                  gamma = 1/7, # disease lasts about 7 days
-                  beta_I = 10,
-                  diffusion = 0.01, # 1% diffusion of infection
-                  pasymp = 0 # no asymptomatic
+    res <- lsdsim(
+      grid_size = 3, time = 20, 
+      ini_S = 1e4,
+      ini_I = c(1, rep(0, 8)),
+      interv_delay = 1, # intervention 1 day after 1st case
+      quarantine = TRUE,
+      quarant_efficacy_out = 1, # no outwards transmission
+      sigma = 1/14, # E->I in about 14 days
+      gamma = 1/7, # disease lasts about 7 days
+      beta_I = 10,
+      diffusion = 0.01, # 1% diffusion of infection
+      pasymp = 0 # no asymptomatic
     )
     
     I <- res[, grep("^I_", colnames(res))]
@@ -346,18 +358,19 @@ test_that(
     ## expectation: 
     ## infection does not spread due to quarantine stopping all transmissions
     ## inside the farms; patch 1 stays at 1 case
-    res <- lsdsim(grid_size = 3, time = 20, 
-                  ini_S = 1e4,
-                  ini_I = c(1, rep(0, 8)),
-                  interv_delay = 1, # intervention 1 day after 1st case
-                  quarantine = TRUE,
-                  quarant_efficacy_in = 1, # no outwards transmission
-                  quarant_efficacy_out = 0, # no outwards transmission
-                  sigma = 1/14, # E->I in about 14 days
-                  gamma = 0, # no leaving I
-                  beta_I = 10,
-                  diffusion = 0.01, # 1% diffusion of infection
-                  pasymp = 0 # no asymptomatic
+    res <- lsdsim(
+      grid_size = 3, time = 20, 
+      ini_S = 1e4,
+      ini_I = c(1, rep(0, 8)),
+      interv_delay = 1, # intervention 1 day after 1st case
+      quarantine = TRUE,
+      quarant_efficacy_in = 1, # no outwards transmission
+      quarant_efficacy_out = 0, # no outwards transmission
+      sigma = 1/14, # E->I in about 14 days
+      gamma = 0, # no leaving I
+      beta_I = 10,
+      diffusion = 0.01, # 1% diffusion of infection
+      pasymp = 0 # no asymptomatic
     )
     
     I <- res[, grep("^I_", colnames(res))]
@@ -375,17 +388,18 @@ test_that(
     ## expectation: 
     ## infection stops because insecticide has perfect efficacy
     ## only 1 infected in pop 1, no infection elsewhere
-    res <- lsdsim(grid_size = 3, time = 30, 
-                  ini_S = 100,
-                  ini_I = c(10, rep(0, 8)),
-                  interv_delay = 1, # intervention 1 day after 1st case, 
-                  interv_release = 30, 
-                  insecticide = TRUE, 
-                  insect_efficacy = 1,
-                  sigma = 1e30, # fast E->I
-                  gamma = 0, # no leaving I
-                  beta_I = 1,
-                  diffusion = 0.1 # 10% diffusion of infection
+    res <- lsdsim(
+      grid_size = 3, time = 30, 
+      ini_S = 100,
+      ini_I = c(10, rep(0, 8)),
+      interv_delay = 1, # intervention 1 day after 1st case, 
+      interv_release = 30, 
+      insecticide = TRUE, 
+      insect_efficacy = 1,
+      sigma = 1e30, # fast E->I
+      gamma = 0, # no leaving I
+      beta_I = 1,
+      diffusion = 0.1 # 10% diffusion of infection
     )
     
     I <- res[, grep("^I_", colnames(res))]
@@ -401,14 +415,15 @@ test_that(
   {
     ## expectation: 
     ## proportion of asymptomatic is about 40%, symptomatic about 60%
-    res <- lsdsim(grid_size = 10, time = 2, 
-                  ini_S = 0,
-                  ini_E = 1e6,
-                  sigma = 1e30, # fast E->AI
-                  gamma = 0, # no leaving I
-                  beta_I = 0,
-                  beta_A = 0,
-                  pasymp = 0.4
+    res <- lsdsim(
+      grid_size = 10, time = 2, 
+      ini_S = 0,
+      ini_E = 1e6,
+      sigma = 1e30, # fast E->AI
+      gamma = 0, # no leaving I
+      beta_I = 0,
+      beta_A = 0,
+      pasymp = 0.4
     )
     
     A <- res[, grep("^A_", colnames(res))]
@@ -418,5 +433,42 @@ test_that(
     expect_true(all(unlist(A[2, ] / E[1, ]) < 0.41))
     expect_true(all(unlist(I[2, ] / E[1, ]) > 0.59))
     expect_true(all(unlist(I[2, ] / E[1, ]) < 0.61))
+  }
+)
+
+
+
+test_that(
+  "selective culling does not affect asymptomatic", 
+  {
+    ## expectation: 
+    ## asymptomatic drive the transmission with a high R0
+    res <- lsdsim(
+      grid_size = 1, time = 30, 
+      ini_S = 1e4,
+      ini_I = 10,
+      sigma = 1e30, # fast E->AI
+      gamma = 0, # no leaving A/I
+      beta_I = 1,
+      beta_A = 1,
+      pasymp = 0.5,
+      select_culling = TRUE,
+      rate_cull = 1000, # immediate kill of all I once in response
+      interv_delay = 3, # response 3 days after 1st case
+      interv_release = 50 # response stops 50 days after last case
+    )
+    
+    # A increases over time
+    expect_true(all(diff(res[res$status_1 == "response", "A_1"]) > 0))
+    
+    # C increases over time
+    expect_true(all(diff(res[res$status_1 == "response", "C_1"]) > 0))
+    
+    # in response mode, only Is are the new ones 
+    expect_equal(
+      res[res$status_1 == "response", "I_1"], 
+      res[res$status_1 == "response", "new_I_1"]
+    )
+    
   }
 )
