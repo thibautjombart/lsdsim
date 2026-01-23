@@ -34,6 +34,7 @@ lsdsim <- function(
     diffusion = 0,
     ini_S = 0,
     ini_E = 0,
+    ini_A = 0,
     ini_I = 0,
     ini_C = 0,
     ini_D = 0,
@@ -48,13 +49,13 @@ lsdsim <- function(
   n_pop <- grid_size^2
   ini_S <- rep(ini_S, length.out = n_pop)
   ini_E <- rep(ini_E, length.out = n_pop)
+  ini_A <- rep(ini_A, length.out = n_pop)
   ini_I <- rep(ini_I, length.out = n_pop)
-  ini_A <- rep(ini_I, length.out = n_pop)
   ini_C <- rep(ini_C, length.out = n_pop)
   ini_D <- rep(ini_D, length.out = n_pop)
   ini_R <- rep(ini_R, length.out = n_pop)
   ini_V <- rep(ini_V, length.out = n_pop)
-  ini_N <- ini_S + ini_E + ini_I + ini_R + ini_V
+  ini_N <- ini_S + ini_E + ini_A + ini_I + ini_R + ini_V
   
   ## geographic structure
   xy <- make_grid(grid_size)
@@ -66,7 +67,7 @@ lsdsim <- function(
   }
   
   ## note: new_I will be used to track the incidence of new cases
-  S <- E <- I <- new_I <- C <- D <- R <- V <- N <- 
+  S <- E <- A <- I <- new_I <- C <- D <- R <- V <- N <- 
     matrix(0, nrow = time, ncol = n_pop)
   S[1, ] <- ini_S
   E[1, ] <- ini_E
