@@ -116,10 +116,11 @@ r_ini_case <- function(n_pop) {
 }
 ```
 
-Input parameters will be the same for different interventions:
+Input parameters will be the same for different interventions; we assume the infectiousness of asymptomatic individuals is about 8 times lower than that of
+infected ones:
 
 ```{r }
-lsd_params <- rlsd_param(n_rep)
+lsd_params <- rlsd_param(n_rep, ratio_R0_A = 1/8)
 head(lsd_params)
 
 list_herd_size <- lapply(1:n_rep, function(i) r_herd_size(n_pop))

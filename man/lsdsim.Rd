@@ -30,6 +30,7 @@ lsdsim(
   diffusion = 0,
   ini_S = 0,
   ini_E = 0,
+  ini_A = 0,
   ini_I = 0,
   ini_C = 0,
   ini_D = 0,

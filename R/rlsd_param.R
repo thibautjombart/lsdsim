@@ -30,8 +30,6 @@
 #'
 #' @export
 #' @param n the number of values to draw
-#' @param ratio_R0_A the ratio of infectiousness of asymptomatic individuals
-#'   compared to symptomatic ones´; defaults to 1/10
 #' @author Thibaut Jombart \email{thibautjombart@@gmail.com}
 #'
 #' @examples
@@ -46,17 +44,18 @@
 #'      xlab = "Infectious period (days)",
 #'      border = "white")
 #' 
-rlsd_param <- function(n, ratio_R0_A = 1/10) {
+rlsd_param <- function(n) {
   out <- data.frame(
-    R0 = rlsd_R0(n),
+    R0_I = rlsd_R0_I(n),
+    R0_A = rlsd_R0_A(n),
     latent = rlsd_latent(n),
     infec_period = rlsd_infec_period(n),
     cfr = rlsd_cfr(n), 
     apsym = rlsd_pasymp(n) 
   )
-  
-  out$beta_I <- out$R0 / out$infec_period
-  out$beta_A <- out$beta_I * ratio_R0_A
+
+  out$beta_I <- out$R0_I / out$infec_period
+  out$beta_A <- out$R0_A / out$infec_period
   out$sigma <- 1 / out$latent
   out$gamma <- 1 / out$infec_period
   out
