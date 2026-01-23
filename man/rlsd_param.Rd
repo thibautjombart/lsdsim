@@ -21,10 +21,13 @@ disease outbreaks in Turkey during 2014-2015. Transbound Emerg Dis.
 2017;64: 1268–1279.
 }
 \usage{
-rlsd_param(n)
+rlsd_param(n, ratio_R0_A = 1/10)
 }
 \arguments{
 \item{n}{the number of values to draw}
+
+\item{ratio_R0_A}{the ratio of infectiousness of asymptomatic individuals
+compared to symptomatic ones´; defaults to 1/10}
 }
 \value{
 A data.frame with one set of parameters per row, including: R0, the

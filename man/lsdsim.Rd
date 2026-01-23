@@ -7,10 +7,12 @@
 lsdsim(
   grid_size = 1,
   time = 365,
-  beta = 0.1,
+  beta_I = 0.1,
+  beta_A = 0.01,
   sigma = 1/7,
   gamma = 1/20,
   cfr = 0.1,
+  pasymp = 0.5,
   mass_culling = FALSE,
   select_culling = FALSE,
   vaccination = FALSE,
