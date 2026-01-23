@@ -17,21 +17,28 @@ disease outbreaks in Turkey during 2014-2015. Transbound Emerg Dis.
 2017;64: 1268–1279.
 }
 \usage{
-rlsd_cfr(n, mu = 3, sd = 0.3)
+rlsd_cfr(n, shape1 = 30, shape2 = 970)
 }
 \arguments{
 \item{n}{the number of values to draw}
 
-\item{mu}{the population average, defaults to 3\% mortality}
+\item{shape1}{the first shape parameter of the beta distribution; defaults to
+50}
 
-\item{sd}{the standard deviation of the lognormal distribution, defaults to
-0.3}
+\item{shape2}{the second shape parameter of the beta distribution; defaults
+to 950}
 }
 \description{
 This random number generator draws average case fatality ratio (CFR) for LSD
-using literature-driven parameters and log-normal distributions. The CFR is
-defined as the proportion of infected cattles who die from the disease.
-Reported values refer to virus isolation in cattle blood.
+using literature-driven parameters and beta distributions. The CFR is defined
+as the proportion of infected cattles who die from the disease. Reported
+values refer to virus isolation in cattle blood. Defaults correpond to a CFR
+of 3\%. See \code{\link[=rbeta]{rbeta()}} for details on means and variances.
+}
+\examples{
+
+hist(rlsd_cfr(1e5), main = "CFR of LSD", xlab = "Proportion of deaths")
+
 }
 \author{
 Thibaut Jombart \email{thibautjombart@gmail.com}

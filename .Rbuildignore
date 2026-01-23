@@ -1,6 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
-^\report_sources$
-^\outputs$
-^\paper$
-^\benchmark$
+^report_sources$
+^outputs$
+^paper$
+^benchmark$
