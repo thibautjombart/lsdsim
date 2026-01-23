@@ -393,3 +393,30 @@ test_that(
     expect_true(all(I[, -1] == 0))
   }
 )
+
+
+
+test_that(
+  "asymptomatic works as expected", 
+  {
+    ## expectation: 
+    ## proportion of asymptomatic is about 40%, symptomatic about 60%
+    res <- lsdsim(grid_size = 10, time = 2, 
+                  ini_S = 0,
+                  ini_E = 1e6,
+                  sigma = 1e30, # fast E->AI
+                  gamma = 0, # no leaving I
+                  beta_I = 0,
+                  beta_A = 0,
+                  pasymp = 0.4
+    )
+    
+    A <- res[, grep("^A_", colnames(res))]
+    E <- res[, grep("^E_", colnames(res))]
+    I <- res[, grep("^I_", colnames(res))]
+    expect_true(all(unlist(A[2, ] / E[1, ]) > 0.39))
+    expect_true(all(unlist(A[2, ] / E[1, ]) < 0.41))
+    expect_true(all(unlist(I[2, ] / E[1, ]) > 0.59))
+    expect_true(all(unlist(I[2, ] / E[1, ]) < 0.61))
+  }
+)
