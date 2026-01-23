@@ -366,11 +366,11 @@ test_that(
     ## only 1 infected in pop 1, no infection elsewhere
     res <- lsdsim(grid_size = 3, time = 30, 
                   ini_S = 100,
-                  ini_I = c(1, rep(0, 8)),
-                  interv_delay = 7, # intervention 1 day after 1st case, 
-                  interv_release = 3, 
+                  ini_I = c(10, rep(0, 8)),
+                  interv_delay = 1, # intervention 1 day after 1st case, 
+                  interv_release = 30, 
                   insecticide = TRUE, 
-                  insect_efficacy = 0.3,
+                  insect_efficacy = 1,
                   sigma = 1e30, # fast E->I
                   gamma = 0, # no leaving I
                   beta = 1,
@@ -378,7 +378,7 @@ test_that(
     )
     
     I <- res[, grep("^I_", colnames(res))]
-    expect_true(all(I[, 1] == 1))
+    expect_true(all(I[, 1] == 10))
     expect_true(all(I[, -1] == 0))
   }
 )
