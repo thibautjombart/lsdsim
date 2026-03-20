@@ -79,6 +79,173 @@ defined by a <code>delta</code> matrix.</p>
     </div>
 
     <div class="section level2">
+    <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
+
+
+<dl><dt id="arg-grid-size">grid_size<a class="anchor" aria-label="anchor" href="#arg-grid-size"></a></dt>
+<dd><p>The size of the regular grid to be used. The number of
+populations will be this number squared. Defaults to 1.</p></dd>
+
+
+<dt id="arg-time">time<a class="anchor" aria-label="anchor" href="#arg-time"></a></dt>
+<dd><p>An <code>integer</code> indicating the duration of the simulation, in
+days. Defaults to 365.</p></dd>
+
+
+<dt id="arg-beta-i">beta_I<a class="anchor" aria-label="anchor" href="#arg-beta-i"></a></dt>
+<dd><p>The rate of infection for symptomatic cases (I); defaults to
+0.1.</p></dd>
+
+
+<dt id="arg-beta-a">beta_A<a class="anchor" aria-label="anchor" href="#arg-beta-a"></a></dt>
+<dd><p>The rate of infection for asymptomatic cases (A); defaults to
+0.01.</p></dd>
+
+
+<dt id="arg-sigma">sigma<a class="anchor" aria-label="anchor" href="#arg-sigma"></a></dt>
+<dd><p>The inverse of the latency period; defaults to 1/7.</p></dd>
+
+
+<dt id="arg-gamma">gamma<a class="anchor" aria-label="anchor" href="#arg-gamma"></a></dt>
+<dd><p>The inverse of the duration of illness; defaults to 1/20.</p></dd>
+
+
+<dt id="arg-cfr">cfr<a class="anchor" aria-label="anchor" href="#arg-cfr"></a></dt>
+<dd><p>The case fatality ratio; defaults to 0.1 (i.e. 10%).</p></dd>
+
+
+<dt id="arg-pasymp">pasymp<a class="anchor" aria-label="anchor" href="#arg-pasymp"></a></dt>
+<dd><p>The average proportion of asymptomatic cases; defaults to 0.5
+(i.e. 50%).</p></dd>
+
+
+<dt id="arg-mass-culling">mass_culling<a class="anchor" aria-label="anchor" href="#arg-mass-culling"></a></dt>
+<dd><p>A <code>logical</code> indicating if mass culling should be used in
+the response. Only the farm where the response takes place is
+affected. Defaults to FALSE.</p></dd>
+
+
+<dt id="arg-select-culling">select_culling<a class="anchor" aria-label="anchor" href="#arg-select-culling"></a></dt>
+<dd><p>A <code>logical</code> indicating if selective culling should be
+used in the response. Only the farm where the response takes place is
+affected. Defaults to FALSE.</p></dd>
+
+
+<dt id="arg-vaccination">vaccination<a class="anchor" aria-label="anchor" href="#arg-vaccination"></a></dt>
+<dd><p>A <code>logical</code> indicating if vaccination should be used in
+the response. The farm where the response takes place and its neighbours
+are affected. Defaults to FALSE.</p></dd>
+
+
+<dt id="arg-quarantine">quarantine<a class="anchor" aria-label="anchor" href="#arg-quarantine"></a></dt>
+<dd><p>A <code>logical</code> indicating if quarantine should be used in
+the response. The farm where the response takes place and its neighbours
+are affected. Defaults to FALSE.</p></dd>
+
+
+<dt id="arg-insecticide">insecticide<a class="anchor" aria-label="anchor" href="#arg-insecticide"></a></dt>
+<dd><p>A <code>logical</code> indicating if insecticide should be used in
+the response. The farm where the response takes place and its neighbours
+are affected. Defaults to FALSE.</p></dd>
+
+
+<dt id="arg-rate-cull">rate_cull<a class="anchor" aria-label="anchor" href="#arg-rate-cull"></a></dt>
+<dd><p>The rate at which culling takes place once the response has
+been triggered. Defaults to 1e30, i.e. all animals are killed in 1 day.</p></dd>
+
+
+<dt id="arg-vacc-coverage">vacc_coverage<a class="anchor" aria-label="anchor" href="#arg-vacc-coverage"></a></dt>
+<dd><p>The vaccine coverage, i.e. the proportion of individuals
+getting vaccinated once the response has been triggered. Defaults to 0 - no
+vaccination.</p></dd>
+
+
+<dt id="arg-vacc-efficacy">vacc_efficacy<a class="anchor" aria-label="anchor" href="#arg-vacc-efficacy"></a></dt>
+<dd><p>The vaccine efficacy, i.e. the proportion of vaccinated
+individuals who effectively become immune. Defaults to 0.65 (i.e. 65%).</p></dd>
+
+
+<dt id="arg-quarant-efficacy-in">quarant_efficacy_in<a class="anchor" aria-label="anchor" href="#arg-quarant-efficacy-in"></a></dt>
+<dd><p>The relative reduction of transmission inside the
+farm due to quarantine. Defaults to 0.2 (i.e. 20%).</p></dd>
+
+
+<dt id="arg-quarant-efficacy-out">quarant_efficacy_out<a class="anchor" aria-label="anchor" href="#arg-quarant-efficacy-out"></a></dt>
+<dd><p>The relative reduction of transmission towards
+neighbouring farms due to quarantine. Defaults to 0.9 (i.e. 90%).</p></dd>
+
+
+<dt id="arg-insect-efficacy">insect_efficacy<a class="anchor" aria-label="anchor" href="#arg-insect-efficacy"></a></dt>
+<dd><p>The relative reduction of transmission due to
+insecticide spray. Defaults to  0.5 (i.e. 50%).</p></dd>
+
+
+<dt id="arg-interv-delay">interv_delay<a class="anchor" aria-label="anchor" href="#arg-interv-delay"></a></dt>
+<dd><p>The delay to intervention, defined as the number of days
+after the first symptomatic case for the intervention to start. Defaults to
+1e30, i.e. no intervention.</p></dd>
+
+
+<dt id="arg-interv-release">interv_release<a class="anchor" aria-label="anchor" href="#arg-interv-release"></a></dt>
+<dd><p>The number of days after the last symptomatic case
+after which the intervention stops. Defaults to 28 days.</p></dd>
+
+
+<dt id="arg-delta">delta<a class="anchor" aria-label="anchor" href="#arg-delta"></a></dt>
+<dd><p>The connectivity matrix defining the proportions of the forces
+of infection going from populations (in rows), to populations (in
+columns). Defaults to <code>NULL</code>, in which case the matrix is generated
+automatically using rook connectivity and the <code>diffusion</code> argument.</p></dd>
+
+
+<dt id="arg-diffusion">diffusion<a class="anchor" aria-label="anchor" href="#arg-diffusion"></a></dt>
+<dd><p>The proportion of the force of infection directed towards
+neighbouring populations, used the build the <code>delta</code> matrix if it is set to
+<code>NULL</code>. Defaults to 0, i.e. no connectivity (<code>delta</code> is the identity
+matrix).</p></dd>
+
+
+<dt id="arg-ini-s">ini_S<a class="anchor" aria-label="anchor" href="#arg-ini-s"></a></dt>
+<dd><p>The initial number of susceptible individuals, recycled as
+needed to match the total number of populations. Defaults to 0.</p></dd>
+
+
+<dt id="arg-ini-e">ini_E<a class="anchor" aria-label="anchor" href="#arg-ini-e"></a></dt>
+<dd><p>The initial number of exposed individuals, recycled as needed to
+match the total number of populations. Defaults to 0.</p></dd>
+
+
+<dt id="arg-ini-a">ini_A<a class="anchor" aria-label="anchor" href="#arg-ini-a"></a></dt>
+<dd><p>The initial number of asymptomatic cases, recycled as needed to
+match the total number of populations. Defaults to 0.</p></dd>
+
+
+<dt id="arg-ini-i">ini_I<a class="anchor" aria-label="anchor" href="#arg-ini-i"></a></dt>
+<dd><p>The initial number of symptomatic cases, recycled as needed to
+match the total number of populations. Defaults to 0.</p></dd>
+
+
+<dt id="arg-ini-c">ini_C<a class="anchor" aria-label="anchor" href="#arg-ini-c"></a></dt>
+<dd><p>The initial number of culled animals, recycled as needed to
+match the total number of populations. Defaults to 0.</p></dd>
+
+
+<dt id="arg-ini-d">ini_D<a class="anchor" aria-label="anchor" href="#arg-ini-d"></a></dt>
+<dd><p>The initial number of individuals who died from the disease,
+recycled as needed to match the total number of populations. Defaults to 0.</p></dd>
+
+
+<dt id="arg-ini-r">ini_R<a class="anchor" aria-label="anchor" href="#arg-ini-r"></a></dt>
+<dd><p>The initial number of recovered individuals, recycled as needed
+to match the total number of populations. Defaults to 0.</p></dd>
+
+
+<dt id="arg-ini-v">ini_V<a class="anchor" aria-label="anchor" href="#arg-ini-v"></a></dt>
+<dd><p>The initial number of individuals immunized through vaccination,
+recycled as needed to match the total number of populations. Defaults to 0.</p></dd>
+
+</dl></div>
+    <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
     <p>Thibaut Jombart <a href="mailto:thibautjombart@gmail.com">thibautjombart@gmail.com</a></p>
     </div>

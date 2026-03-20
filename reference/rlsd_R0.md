@@ -14,16 +14,19 @@ vectors), based on virus isolation in cattle blood.
 ## Usage
 
 ``` r
-rlsd_R0_I(n, mu = 9.7, sd = 0.05)
+rlsd_R0_I(n, mu = 20, sd = 0.02)
 
-rlsd_R0_A(n, mu = 1.2, sd = 0.1)
+rlsd_R0_A(n, mu = 2, sd = 0.1)
 ```
 
 ## Source
 
-Gubbins S. Using the basic reproduction number to assess the risk of
-transmission of lumpy skin disease virus by biting insects. Transbound
-Emerg Dis. 2019;66: 1873–1883.
+Sanz-Bernardo B, Haga IR, Wijesiriwardana N, Basu S, Larner W, Diaz AV,
+et al. Quantifying and modeling the acquisition and retention of lumpy
+skin disease virus by hematophagus insects reveals clinically but not
+subclinically affected cattle are promoters of viral transmission and
+key targets for control of disease outbreaks. J Virol. 2021;95.
+doi:10.1128/JVI.02239-20
 
 ## Arguments
 
