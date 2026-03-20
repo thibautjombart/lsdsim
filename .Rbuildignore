@@ -5,3 +5,6 @@
 ^paper$
 ^benchmark$
 ^\.github$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

@@ -3,3 +3,4 @@ outputs
 .Rhistory
 *.Rproj
 .Rproj.user
+docs

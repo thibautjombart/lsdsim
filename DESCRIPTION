@@ -10,3 +10,4 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Imports: 
     stats
+URL: https://thibautjombart.github.io/lsdsim/
