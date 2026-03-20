@@ -5,6 +5,9 @@ date: "`r Sys.Date()`"
 output: github_document
 ---
 
+ [![R-CMD-check](https://github.com/thibautjombart/lsdsim/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/thibautjombart/lsdsim/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/thibautjombart/lsdsim/graph/badge.svg)](https://app.codecov.io/gh/thibautjombart/lsdsim)
+
 
 This repository contains the __R__ package _lsdsim_ which implements a 
 stochastic, meta-population compartmental model of Lumpy Skin Disease (LSD), 
