@@ -38,6 +38,108 @@ lsdsim(
   ini_V = 0
 )
 }
+\arguments{
+\item{grid_size}{The size of the regular grid to be used. The number of
+populations will be this number squared. Defaults to 1.}
+
+\item{time}{An \code{integer} indicating the duration of the simulation, in
+days. Defaults to 365.}
+
+\item{beta_I}{The rate of infection for symptomatic cases (I); defaults to
+0.1.}
+
+\item{beta_A}{The rate of infection for asymptomatic cases (A); defaults to
+0.01.}
+
+\item{sigma}{The inverse of the latency period; defaults to 1/7.}
+
+\item{gamma}{The inverse of the duration of illness; defaults to 1/20.}
+
+\item{cfr}{The case fatality ratio; defaults to 0.1 (i.e. 10\%).}
+
+\item{pasymp}{The average proportion of asymptomatic cases; defaults to 0.5
+(i.e. 50\%).}
+
+\item{mass_culling}{A \code{logical} indicating if mass culling should be used in
+the response. Only the farm where the response takes place is
+affected. Defaults to FALSE.}
+
+\item{select_culling}{A \code{logical} indicating if selective culling should be
+used in the response. Only the farm where the response takes place is
+affected. Defaults to FALSE.}
+
+\item{vaccination}{A \code{logical} indicating if vaccination should be used in
+the response. The farm where the response takes place and its neighbours
+are affected. Defaults to FALSE.}
+
+\item{quarantine}{A \code{logical} indicating if quarantine should be used in
+the response. The farm where the response takes place and its neighbours
+are affected. Defaults to FALSE.}
+
+\item{insecticide}{A \code{logical} indicating if insecticide should be used in
+the response. The farm where the response takes place and its neighbours
+are affected. Defaults to FALSE.}
+
+\item{rate_cull}{The rate at which culling takes place once the response has
+been triggered. Defaults to 1e30, i.e. all animals are killed in 1 day.}
+
+\item{vacc_coverage}{The vaccine coverage, i.e. the proportion of individuals
+getting vaccinated once the response has been triggered. Defaults to 0 - no
+vaccination.}
+
+\item{vacc_efficacy}{The vaccine efficacy, i.e. the proportion of vaccinated
+individuals who effectively become immune. Defaults to 0.65 (i.e. 65\%).}
+
+\item{quarant_efficacy_in}{The relative reduction of transmission inside the
+farm due to quarantine. Defaults to 0.2 (i.e. 20\%).}
+
+\item{quarant_efficacy_out}{The relative reduction of transmission towards
+neighbouring farms due to quarantine. Defaults to 0.9 (i.e. 90\%).}
+
+\item{insect_efficacy}{The relative reduction of transmission due to
+insecticide spray. Defaults to  0.5 (i.e. 50\%).}
+
+\item{interv_delay}{The delay to intervention, defined as the number of days
+after the first symptomatic case for the intervention to start. Defaults to
+1e30, i.e. no intervention.}
+
+\item{interv_release}{The number of days after the last symptomatic case
+after which the intervention stops. Defaults to 28 days.}
+
+\item{delta}{The connectivity matrix defining the proportions of the forces
+of infection going from populations (in rows), to populations (in
+columns). Defaults to \code{NULL}, in which case the matrix is generated
+automatically using rook connectivity and the \code{diffusion} argument.}
+
+\item{diffusion}{The proportion of the force of infection directed towards
+neighbouring populations, used the build the \code{delta} matrix if it is set to
+\code{NULL}. Defaults to 0, i.e. no connectivity (\code{delta} is the identity
+matrix).}
+
+\item{ini_S}{The initial number of susceptible individuals, recycled as
+needed to match the total number of populations. Defaults to 0.}
+
+\item{ini_E}{The initial number of exposed individuals, recycled as needed to
+match the total number of populations. Defaults to 0.}
+
+\item{ini_A}{The initial number of asymptomatic cases, recycled as needed to
+match the total number of populations. Defaults to 0.}
+
+\item{ini_I}{The initial number of symptomatic cases, recycled as needed to
+match the total number of populations. Defaults to 0.}
+
+\item{ini_C}{The initial number of culled animals, recycled as needed to
+match the total number of populations. Defaults to 0.}
+
+\item{ini_D}{The initial number of individuals who died from the disease,
+recycled as needed to match the total number of populations. Defaults to 0.}
+
+\item{ini_R}{The initial number of recovered individuals, recycled as needed
+to match the total number of populations. Defaults to 0.}
+
+\item{ini_V}{The initial number of individuals immunized through vaccination,
+recycled as needed to match the total number of populations. Defaults to 0.}
+}
 \description{
 This function simulates an outbreak of Lumpy skin disease in a meta-population
 arranged on a regular grid of size \code{grid_size}, and a diffusion process

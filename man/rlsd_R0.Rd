@@ -5,20 +5,23 @@
 \alias{rlsd_R0_A}
 \title{Draw LSD basic reproduction numbers}
 \source{
-Gubbins S. Using the basic reproduction number to assess the risk of
-transmission of lumpy skin disease virus by biting insects. Transbound
-Emerg Dis. 2019;66: 1873–1883.
+Sanz-Bernardo B, Haga IR, Wijesiriwardana N, Basu S, Larner W, Diaz
+AV, et al. Quantifying and modeling the acquisition and retention of lumpy
+skin disease virus by hematophagus insects reveals clinically but not
+subclinically affected cattle are promoters of viral transmission and key
+targets for control of disease outbreaks. J Virol. 2021;95.
+doi:10.1128/JVI.02239-20
 }
 \usage{
-rlsd_R0_I(n, mu = 9.7, sd = 0.05)
+rlsd_R0_I(n, mu = 20, sd = 0.02)
 
-rlsd_R0_A(n, mu = 1.2, sd = 0.1)
+rlsd_R0_A(n, mu = 2, sd = 0.1)
 }
 \arguments{
 \item{n}{the number of values to draw}
 
-\item{mu}{the population average, defaults to 9.7 for symptomatic individuals,
-and 1.2 for asymptomatic cases}
+\item{mu}{the population average, defaults to 9.7 for symptomatic
+individuals, and 1.2 for asymptomatic cases}
 
 \item{sd}{the standard deviation of the lognormal distribution, defaults to
 0.1 for symptomatic individuals, and 0.1 for asymptomatic cases}
