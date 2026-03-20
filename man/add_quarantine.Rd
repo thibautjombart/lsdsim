@@ -4,12 +4,14 @@
 \alias{add_quarantine}
 \title{Change connectivity matrix in quarantine}
 \usage{
-add_quarantine(delta, efficacy)
+add_quarantine(delta, efficacy_in, efficacy_out)
 }
 \arguments{
 \item{delta}{the connectivity matrix used in \link{lsdsim}}
 
-\item{efficacy}{the relative reduction in outward-going transmission}
+\item{efficacy_in}{the relative reduction in transmission within herds}
+
+\item{efficacy_out}{the relative reduction in outward-going transmission}
 }
 \description{
 This function changes the delta matrix used in \link{lsdsim} to implement

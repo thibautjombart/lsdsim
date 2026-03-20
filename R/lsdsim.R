@@ -11,10 +11,12 @@
 lsdsim <- function(
     grid_size = 1,
     time = 365,
-    beta = 0.1, # density-dependent infection rate
+    beta_I = 0.1, # infection rate for I
+    beta_A = 0.01, # infection rate for A
     sigma = 1/7, # inv. latent period
     gamma = 1/20, # inv. duration of infection
     cfr = 0.1, # case fatality ratio
+    pasymp = 0.5, # proportion of asymptomatic cases
     mass_culling = FALSE, # mass culling in affected populations?
     select_culling = FALSE, # culling of infected (I) individuals only
     vaccination = FALSE, # vaccinate affected population and neighbours?
@@ -32,6 +34,7 @@ lsdsim <- function(
     diffusion = 0,
     ini_S = 0,
     ini_E = 0,
+    ini_A = 0,
     ini_I = 0,
     ini_C = 0,
     ini_D = 0,
@@ -46,12 +49,13 @@ lsdsim <- function(
   n_pop <- grid_size^2
   ini_S <- rep(ini_S, length.out = n_pop)
   ini_E <- rep(ini_E, length.out = n_pop)
+  ini_A <- rep(ini_A, length.out = n_pop)
   ini_I <- rep(ini_I, length.out = n_pop)
   ini_C <- rep(ini_C, length.out = n_pop)
   ini_D <- rep(ini_D, length.out = n_pop)
   ini_R <- rep(ini_R, length.out = n_pop)
   ini_V <- rep(ini_V, length.out = n_pop)
-  ini_N <- ini_S + ini_E + ini_I + ini_R + ini_V
+  ini_N <- ini_S + ini_E + ini_A + ini_I + ini_R + ini_V
   
   ## geographic structure
   xy <- make_grid(grid_size)
@@ -63,10 +67,11 @@ lsdsim <- function(
   }
   
   ## note: new_I will be used to track the incidence of new cases
-  S <- E <- I <- new_I <- C <- D <- R <- V <- N <- 
+  S <- E <- A <- I <- new_I <- C <- D <- R <- V <- N <- 
     matrix(0, nrow = time, ncol = n_pop)
   S[1, ] <- ini_S
   E[1, ] <- ini_E
+  A[1, ] <- ini_A
   I[1, ] <- new_I[1, ] <- ini_I
   C[1, ] <- ini_C
   D[1, ] <- ini_D
@@ -175,20 +180,29 @@ lsdsim <- function(
     }
    
     if (insecticide) {
-       current_beta <- rep(beta, n_pop)
-       current_beta[id_pop_response_and_ring] <- current_beta[id_pop_response_and_ring] * (1 - insect_efficacy)
+       current_beta_I <- rep(beta_I, n_pop)
+       current_beta_I[id_pop_response_and_ring] <- 
+         current_beta_I[id_pop_response_and_ring] * (1 - insect_efficacy)
+       
+       current_beta_A <- rep(beta_A, n_pop)
+       current_beta_A[id_pop_response_and_ring] <- 
+         current_beta_A[id_pop_response_and_ring] * (1 - insect_efficacy)
     } else {
-      current_beta <- beta
+      current_beta_I <- beta_I
+      current_beta_A <- beta_A
     }
     
     
     ## individuals leaving S...
-    ## - to E (new infections)
-    ## - to V (vaccination)
-    ## (mass_culling will be handled separately)
-      
+    ## - to be infected (E)
+    ## - to be vaccinated (V)
+    ## - to be culled (C)
+    ##
     ## nested binomials are used to decide where individuals leaving S go
-    rate_S_E <- as.vector(delta %*% (current_beta * I[t, ] / N[t, ]))
+    rate_S_E <- as.vector(
+      delta %*% ((current_beta_I * I[t, ] + current_beta_A * A[t, ]) / N[t, ])
+    )
+    
     rate_S_E[is.na(rate_S_E)] <- 0 # for populations where N = 0
     rate_S_out <- rate_S_E + rate_S_V + rate_into_C
     p_S_out <- 1 - exp(-rate_S_out)
@@ -204,15 +218,39 @@ lsdsim <- function(
     n_S_C <- n_S_out - n_S_E - n_S_V
     
     
-    ## individuals leaving E
+    ## individuals leaving E...
+    ## - to become asymptomatic (A)
+    ## - to become infectious, symptomatic (I)
+    ## - to be culled (C)
+    ##
+    ## We first draw the number of individuals leaving E, then decide which ones
+    ## go to A or I, then draw the ones going to A, I, and deduce C from the 
+    ## rest.
     rate_E_out <- sigma + rate_into_C
     p_E_out <- 1 - exp(-rate_E_out)
     n_E_out <- rbinom(n_pop, size = E[t, ], prob = p_E_out)
-    E_I_ratio <- sigma / rate_E_out
-    E_I_ratio[!is.finite(E_I_ratio)] <- 0
-    n_E_I <- rbinom(n_pop, size = n_E_out, prob = E_I_ratio)
-    n_E_C <- n_E_out - n_E_I
+    E_AI_ratio <- sigma / rate_E_out
+    E_AI_ratio[!is.finite(E_AI_ratio)] <- 0
+    n_E_AI <- rbinom(n_pop, size = n_E_out, prob = E_AI_ratio)
+    n_E_A <- rbinom(n_pop, size = n_E_AI, prob = pasymp)
+    n_E_I <- n_E_AI - n_E_A
+    n_E_C <- n_E_out - n_E_AI
+   
     
+    ## individuals leaving A...
+    ## - to recover (R)
+    ## - to be culled (C), either though mass culling of selective culling
+    ##
+    
+    rate_A_out <- gamma + rate_into_C
+    p_A_out <- 1 - exp(-rate_A_out)
+    n_A_out <- rbinom(n_pop, size = A[t, ], prob = p_A_out)
+    A_R_ratio <- gamma / rate_A_out
+    A_R_ratio[!is.finite(A_R_ratio)] <- 0
+    n_A_R <- rbinom(n_pop, size = n_A_out, prob = A_R_ratio)
+    n_A_C <- n_A_out - n_A_R
+    
+     
     ## individuals leaving I...
     ## - to recover (R)
     ## - to die from the disease (D)
@@ -240,13 +278,14 @@ lsdsim <- function(
     
     ## all changes
     S[t + 1, ] <- S[t, ] - n_S_E - n_S_V - n_S_C
-    E[t + 1, ] <- E[t, ] + n_S_E - n_E_I - n_E_C
+    E[t + 1, ] <- E[t, ] + n_S_E - n_E_A - n_E_I - n_E_C
+    A[t + 1, ] <- A[t, ] + n_E_A - n_A_R - n_A_C
     I[t + 1, ] <- I[t, ] + n_E_I - n_I_D - n_I_R - n_I_C
-    C[t + 1, ] <- C[t, ] + n_S_C + n_E_C + n_I_C + n_R_C + n_V_C
+    C[t + 1, ] <- C[t, ] + n_S_C + n_E_C + n_A_C + n_I_C + n_R_C + n_V_C
     D[t + 1, ] <- D[t, ] + n_I_D
-    R[t + 1, ] <- R[t, ] + n_I_R - n_R_C
+    R[t + 1, ] <- R[t, ] + n_A_R + n_I_R - n_R_C
     V[t + 1, ] <- V[t, ] + n_S_V - n_V_C
-    N[t + 1, ] <- S[t + 1, ] + E[t + 1, ] + I[t + 1, ] + R[t + 1, ] + V[t + 1, ]
+    N[t + 1, ] <- S[t + 1, ] + E[t + 1, ] + A[t + 1, ] + I[t + 1, ] + R[t + 1, ] + V[t + 1, ]
     new_I[t + 1, ] <- n_E_I
   }
   
@@ -254,6 +293,7 @@ lsdsim <- function(
   ## format output
   colnames(S) <- paste("S", seq_len(n_pop), sep = "_")
   colnames(E) <- paste("E", seq_len(n_pop), sep = "_")
+  colnames(A) <- paste("A", seq_len(n_pop), sep = "_")
   colnames(I) <- paste("I", seq_len(n_pop), sep = "_")
   colnames(C) <- paste("C", seq_len(n_pop), sep = "_")
   colnames(D) <- paste("D", seq_len(n_pop), sep = "_")
@@ -263,7 +303,7 @@ lsdsim <- function(
   colnames(new_I) <- paste("new_I", seq_len(n_pop), sep = "_")
   colnames(status) <- paste("status", seq_len(n_pop), sep = "_")
   
-  out <- cbind.data.frame(S, E, I, C, D, R, V, N, new_I, status)
+  out <- cbind.data.frame(S, E, A, I, C, D, R, V, N, new_I, status)
   class(out) <- c("lsdsim", class(out))
   out
 }
