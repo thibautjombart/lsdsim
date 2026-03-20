@@ -1,6 +1,10 @@
 # A stochastic meta-population model of LSD epidemics
 
-Thibaut Jombart 2026-01-07
+Thibaut Jombart 2026-03-20
+
+[![R-CMD-check](https://github.com/thibautjombart/lsdsim/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/thibautjombart/lsdsim/actions/workflows/R-CMD-check.yaml)
+[![Codecov test
+coverage](https://codecov.io/gh/thibautjombart/lsdsim/graph/badge.svg)](https://app.codecov.io/gh/thibautjombart/lsdsim)
 
 This repository contains the **R** package *lsdsim* which implements a
 stochastic, meta-population compartmental model of Lumpy Skin Disease
