@@ -7,9 +7,9 @@
 #' (see details).
 #'
 #' @details Cliques are chosen at random from the existing locations, using a
-#'   Binomial draw with probability `p_clique`. Then the number of connections
-#'   added for each clique lies between `clique_size_min`, and
-#'   `clique_size_max`.
+#'   Binomial draw with probability `p_clique`. New connections are added so
+#'   that cliques are connected to an average of `clique_connect` of all other
+#'   locations.
 #'
 #' @export
 #' @param coords a 2-columns matrix of xy coordinates
@@ -18,24 +18,33 @@
 #'   neighbours
 #' @param p_clique the proportion of cliques (highly connected locations);
 #'   defaults to zero (no cliques)
-#' @param clique_size_min the minimum size of cliques (number of connections
-#'   added to rook connectivity); defaults to 0
-#' @param clique_size_max the maximum size of cliques (number of connections
-#'   added to rook connectivity); defaults to 0
+#' @param clique_connect the average connectivity of cliques; defaults to 0
 #'
 #' @author Thibaut Jombart \email{thibautjombart@@gmail.com}
 
 make_delta <- function(coords, 
                        diffusion = 0,
                        p_clique = 0,
-                       clique_size_min = 0, 
-                       clique_size_max = 0
+                       clique_connect = 0
                        ){
   
   ## define neighours from rook connectivity
   out <- 1 * as.matrix(dist(coords))^2 < 1.01 # identify neighbours
   
-  ## add cliques
+  ## add cliques using hypergeometric distribution
+  n_cliques <- stats::rbinom(1, nrow(out), p_clique)
+  id_cliques <- sample.int(nrow(out), n_cliques)
+  
+  for (i in id_cliques) {
+    to_replace <- !out[i, ]
+    new_connections <- sample(
+      c(TRUE, FALSE), 
+      size = sum(to_replace), 
+      prob = c(clique_connect, 1 - clique_connect), 
+      replace = TRUE
+    )
+    out[i, to_replace] <- new_connections
+  }
   
   ## zero the diagonal, standardise the matrix
   diag(out) <- 0

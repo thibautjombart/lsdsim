@@ -66,7 +66,7 @@ duration <- 365
 grid_size <- 40
 n_pop <- grid_size^2
 xy <- make_grid(grid_size)
-delta <- make_delta(xy, diffusion = 0.05)
+
 ```
 
 The size of the farms, in number of herds, is drawn using an average herd size 
@@ -159,6 +159,14 @@ if (!dir.exists(output_dir)) {
 
 res_baseline <- vector(mode = "list", length = n_rep)
 for (i in seq_len(n_rep)) {
+  ## the  delta is generated on the fly to avoid tremendous RAM requirements;
+  ## we proceed as follows:
+  ## 
+  ## generate the delta matrix from the rook connectivity with diffusion ranging
+  ## 1-10%; cliques and long-distance connections are added to the rook
+  ## connections
+delta <- make_delta(xy, diffusion = runif(1, min = 0.01, max = 0.1))
+  
   ## run simulation
   current_sim <- fast_lsdsim(
     grid_size = grid_size, 
