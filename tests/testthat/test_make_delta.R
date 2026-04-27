@@ -20,6 +20,12 @@ test_that(
 
     ## neighbours are all 1 unit away from each other at most
     expect_true(all(as.matrix(dist(xy))[res > 0] <= 1))
+    
+    
+    ## non-uniform diffusion
+    diff <- rep(c(0, 0.1, 0.5), c(3, 4, 2))
+    res <- make_delta(xy, diffusion = diff)
+    expect_equal(diag(res), 1-diff)
   }
 )
 
