@@ -199,9 +199,19 @@ R_over_time %>%
 
 ```
 
-
+R0 are translated into betas and the rest of the inputs are generated:
 
 ```{r }
+beta_I_season <- lapply(
+  seq_along(R0_I_season), 
+  function(i) R0_I_season[[i]] / lsd_params$gamma[i]
+)
+beta_A_season <- lapply(
+  seq_along(R0_A_season), 
+  function(i) R0_A_season[[i]] / lsd_params$gamma[i]
+)
+
+
 list_herd_size <- lapply(1:n_rep, function(i) r_herd_size(n_pop))
 list_ini_cases <- lapply(1:n_rep, function(i) r_ini_case(n_pop))
 
@@ -216,6 +226,8 @@ inputs <- tibble(
   lsd_params, 
   ini_S = list_herd_size,
   ini_I = list_ini_cases, 
+  beta_I = beta_I_season,
+  beta_A = beta_A_season,
   interv_delay = sample(2:14, replace = TRUE, size = n_rep),
   quarant_eff_in = runif(n_rep, min = 0, max = 0.2),
   quarant_eff_out = runif(n_rep, min = 0.8, max = 1),
@@ -258,8 +270,8 @@ delta <- make_delta(xy,
     ini_S = unlist(inputs$ini_S[[i]]), 
     ini_I = unlist(inputs$ini_I[[i]]),
     delta = delta,
-    beta_A = inputs$beta_A[i],
-    beta_I = inputs$beta_I[i],
+    beta_A = inputs$beta_A[[i]],
+    beta_I = inputs$beta_I[[i]],
     sigma = inputs$sigma[i],
     gamma = inputs$gamma[i],
     pasymp = inputs$pasymp[i],
@@ -316,8 +328,8 @@ for (i in seq_len(n_rep)) {
     ini_S = unlist(inputs$ini_S[[i]]), 
     ini_I = unlist(inputs$ini_I[[i]]),
     delta = delta,
-    beta_A = inputs$beta_A[i],
-    beta_I = inputs$beta_I[i],
+    beta_A = inputs$beta_A[[i]],
+    beta_I = inputs$beta_I[[i]],
     sigma = inputs$sigma[i],
     gamma = inputs$gamma[i],
     pasymp = inputs$pasymp[i],
@@ -380,8 +392,8 @@ for (i in seq_len(n_rep)) {
     ini_S = unlist(inputs$ini_S[[i]]), 
     ini_I = unlist(inputs$ini_I[[i]]),
     delta = delta,
-    beta_A = inputs$beta_A[i],
-    beta_I = inputs$beta_I[i],
+    beta_A = inputs$beta_A[[i]],
+    beta_I = inputs$beta_I[[i]],
     sigma = inputs$sigma[i],
     gamma = inputs$gamma[i],
     pasymp = inputs$pasymp[i],
@@ -445,8 +457,8 @@ for (i in seq_len(n_rep)) {
     ini_S = unlist(inputs$ini_S[[i]]), 
     ini_I = unlist(inputs$ini_I[[i]]),
     delta = delta,
-    beta_A = inputs$beta_A[i],
-    beta_I = inputs$beta_I[i],
+    beta_A = inputs$beta_A[[i]],
+    beta_I = inputs$beta_I[[i]],
     sigma = inputs$sigma[i],
     gamma = inputs$gamma[i],
     pasymp = inputs$pasymp[i],
@@ -514,8 +526,8 @@ for (i in seq_len(n_rep)) {
     ini_S = unlist(inputs$ini_S[[i]]), 
     ini_I = unlist(inputs$ini_I[[i]]),
     delta = delta,
-    beta_A = inputs$beta_A[i],
-    beta_I = inputs$beta_I[i],
+    beta_A = inputs$beta_A[[i]],
+    beta_I = inputs$beta_I[[i]],
     sigma = inputs$sigma[i],
     gamma = inputs$gamma[i],
     pasymp = inputs$pasymp[i],
@@ -575,8 +587,8 @@ for (i in seq_len(n_rep)) {
     ini_S = unlist(inputs$ini_S[[i]]), 
     ini_I = unlist(inputs$ini_I[[i]]),
     delta = delta,
-    beta_A = inputs$beta_A[i],
-    beta_I = inputs$beta_I[i],
+    beta_A = inputs$beta_A[[i]],
+    beta_I = inputs$beta_I[[i]],
     sigma = inputs$sigma[i],
     gamma = inputs$gamma[i],
     pasymp = inputs$pasymp[i],
