@@ -14,10 +14,12 @@
 #'   days. Defaults to 365.
 #'
 #' @param beta_I The rate of infection for symptomatic cases (I); defaults to
-#'   0.1.
+#'   0.1. Can be time-dependent, in which case one value per time step must be 
+#'   specified.
 #'
 #' @param beta_A The rate of infection for asymptomatic cases (A); defaults to
-#'   0.01.
+#'   0.01. Can be time-dependent, in which case one value per time step must be 
+#'   specified.
 #'
 #' @param sigma The inverse of the latency period; defaults to 1/7.
 #'
@@ -147,6 +149,18 @@ lsdsim <- function(
   ## handle arguments
   ### recycle arguments as needed
   ### define defaults for NULL values
+  
+  if (length(beta_I) > 1 && length(beta_I) != time) {
+    msg <- "If non-unique, values of beta_I must be provided for each time step"
+    stop(msg)
+  }
+  beta_I <- rep(beta_I, length = time)
+  
+  if (length(beta_A) > 1 && length(beta_A) != time) {
+    msg <- "If non-unique, values of beta_A must be provided for each time step"
+    stop(msg)
+  }
+  beta_A <- rep(beta_A, length = time)
   
   n_pop <- grid_size^2
   ini_S <- rep(ini_S, length.out = n_pop)
@@ -282,16 +296,16 @@ lsdsim <- function(
     }
    
     if (insecticide) {
-       current_beta_I <- rep(beta_I, n_pop)
+       current_beta_I <- rep(beta_I[t], n_pop)
        current_beta_I[id_pop_response_and_ring] <- 
          current_beta_I[id_pop_response_and_ring] * (1 - insect_efficacy)
        
-       current_beta_A <- rep(beta_A, n_pop)
+       current_beta_A <- rep(beta_A[t], n_pop)
        current_beta_A[id_pop_response_and_ring] <- 
          current_beta_A[id_pop_response_and_ring] * (1 - insect_efficacy)
     } else {
-      current_beta_I <- beta_I
-      current_beta_A <- beta_A
+      current_beta_I <- beta_I[t]
+      current_beta_A <- beta_A[t]
     }
     
     

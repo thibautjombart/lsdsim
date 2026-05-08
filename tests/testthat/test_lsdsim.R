@@ -1,4 +1,19 @@
 test_that(
+  "errors happen when they should", {
+   
+    msg <- "If non-unique, values of beta_I must be provided for each time step"
+    expect_error(lsdsim(time = 10, beta_I = 1:3), msg)
+    
+    msg <- "If non-unique, values of beta_A must be provided for each time step"
+    expect_error(lsdsim(time = 10, beta_A = 1:3), msg)
+    
+    
+  }
+)
+
+
+
+test_that(
   "lsdsim output has the right dimensions", {
     res <- lsdsim()
     expect_equal(dim(res), c(365, 11))

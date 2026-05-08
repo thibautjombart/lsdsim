@@ -170,12 +170,14 @@ start_dates <- sample.int(365, n_rep, replace = TRUE)
 R0_I_season <- lapply(
   seq_len(n_rep),
   function(i) R_season(start = start_dates[i], 
-                       max_R = lsd_params$R0_I[i])
+                       max_R = lsd_params$R0_I[i], 
+                       min_R = 2)
   )
 R0_A_season <- lapply(
   seq_len(n_rep),
   function(i) R_season(start = start_dates[i], 
-                       max_R = lsd_params$R0_A[i])
+                       max_R = lsd_params$R0_A[i], 
+                       min_R = 0)
   )
 
 ## We make a figure keep at most the first 10 simulated time series:
@@ -183,9 +185,17 @@ R_over_time <- data.frame(
   Symptomatic = unlist(head(R0_I_season, 10)),
   Asymptomatic = unlist(head(R0_A_season, 10)),
   time = 1:365
-) %>% 
-  pivot_longer(1:2, values_to = "R", names_to = "Source")
-   
+)
+n_sim_kept <- min(10, n_rep)
+R_over_time$sim = rep(1:n_sim_kept, each = 365)
+
+R_over_time %>%
+  pivot_longer(1:2, values_to = "R", names_to = "Source") %>% 
+  ggplot(aes(x = time, y = R)) + 
+  geom_line(aes(group = sim)) + 
+  facet_wrap(~Source, nrow = 2, scales = "free_y") + 
+  theme_bw() + 
+  labs(x = "Time (days since introduction)", y = "Reproduction number (R0)")
 
 ```
 
