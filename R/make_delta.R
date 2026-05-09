@@ -18,7 +18,8 @@
 #'   neighbours
 #' @param p_clique the proportion of cliques (highly connected locations);
 #'   defaults to zero (no cliques)
-#' @param clique_connect the average connectivity of cliques; defaults to 0
+#' @param clique_connect the average connectivity of cliques, defined as the 
+#' average number of other locations a clique is connected to; defaults to 0
 #'
 #' @author Thibaut Jombart \email{thibautjombart@@gmail.com}
 
@@ -34,13 +35,14 @@ make_delta <- function(coords,
   ## add cliques using hypergeometric distribution
   n_cliques <- stats::rbinom(1, nrow(out), p_clique)
   id_cliques <- sample.int(nrow(out), n_cliques)
+  p_clique_connect <- min(clique_connect / nrow(out), 1)
   
   for (i in id_cliques) {
     to_replace <- !out[i, ]
     new_connections <- sample(
       c(TRUE, FALSE), 
       size = sum(to_replace), 
-      prob = c(clique_connect, 1 - clique_connect), 
+      prob = c(p_clique_connect, 1 - p_clique_connect), 
       replace = TRUE
     )
     out[i, to_replace] <- new_connections

@@ -2,7 +2,7 @@
 title: "A stochastic meta-population model of LSDV epidemics"
 author: "Thibaut Jombart"
 params:
-  n_rep: 10
+  n_rep: 1000
   run_sim: TRUE
 output:
   html_document:
@@ -204,11 +204,11 @@ R0 are translated into betas and the rest of the inputs are generated:
 ```{r }
 beta_I_season <- lapply(
   seq_along(R0_I_season), 
-  function(i) R0_I_season[[i]] / lsd_params$gamma[i]
+  function(i) R0_I_season[[i]] * lsd_params$gamma[i]
 )
 beta_A_season <- lapply(
   seq_along(R0_A_season), 
-  function(i) R0_A_season[[i]] / lsd_params$gamma[i]
+  function(i) R0_A_season[[i]] * lsd_params$gamma[i]
 )
 
 
@@ -223,7 +223,7 @@ list_ini_cases <- lapply(1:n_rep, function(i) r_ini_case(n_pop))
 ## - insecticide efficacy: 50-95%
 
 inputs <- tibble(
-  lsd_params, 
+  lsd_params %>% select(-c(beta_I, beta_A)), 
   ini_S = list_herd_size,
   ini_I = list_ini_cases, 
   beta_I = beta_I_season,
@@ -236,6 +236,36 @@ inputs <- tibble(
 
 inputs$label <- apply(inputs, 1, function(e) substr(digest(e), 1, 8))
 ```
+We also need to pre-generate delta matrices for each simulation. As they are 
+large, we need to store them as separate files as they would otherwise clog the 
+RAM:
+
+```{r}
+delta_dir <- here::here("outputs", "delta")
+dir.create(delta_dir)
+
+for (i in seq_len(n_rep)) {
+  ## the  delta is generated on the fly to avoid tremendous RAM requirements; we
+  ## proceed as follows:
+  ##
+  ## generate the delta matrix from the rook connectivity with diffusion ranging
+  ## 1-10% from one location to another; there are 1-5% of cliques, which are
+  ## connected to 1-3% of all other populations)
+  delta <- make_delta(xy, 
+                      diffusion = runif(nrow(xy), min = 0.01, max = 0.1), 
+                      p_clique = runif(1, min = 0.01, max = 0.05),
+                      clique_connect = sample(5:30, 1)
+  )
+  file_name <- paste0("delta_", i, ".qs")
+  qsave(delta, file.path(delta_dir, file_name))
+  
+}
+
+delta_files <- list.files(delta_dir, full.names = TRUE)
+
+```
+
+
 
 
 
@@ -251,17 +281,9 @@ if (!dir.exists(output_dir)) {
 
 res_baseline <- vector(mode = "list", length = n_rep)
 for (i in seq_len(n_rep)) {
-  ## the  delta is generated on the fly to avoid tremendous RAM requirements; we
-  ## proceed as follows:
-  ##
-  ## generate the delta matrix from the rook connectivity with diffusion ranging
-  ## 1-10% from one location to another; there are 1-5% of cliques, which are
-  ## connected to 1-3% of all other populations)
-delta <- make_delta(xy, 
-                    diffusion = runif(nrow(xy), min = 0.01, max = 0.1), 
-                    p_clique = runif(1, min = 0.01, max = 0.05),
-                    clique_connect = runif(1, min = 0.01, max = 0.03)
-                    )
+
+  ## read a delta file for this simulation
+  delta <- qread(delta_files[i])
   
   ## run simulation
   current_sim <- fast_lsdsim(
@@ -321,6 +343,10 @@ if (!dir.exists(output_dir)) {
 
 res_cull_quarant_vacc <- vector(mode = "list", length = n_rep)
 for (i in seq_len(n_rep)) {
+
+  ## read a delta file for this simulation
+  delta <- qread(delta_files[i])
+
   ## run simulation
   current_sim <- fast_lsdsim(
     grid_size = grid_size, 
@@ -385,6 +411,10 @@ if (!dir.exists(output_dir)) {
 
 res_quarant_vacc <- vector(mode = "list", length = n_rep)
 for (i in seq_len(n_rep)) {
+
+  ## read a delta file for this simulation
+  delta <- qread(delta_files[i])
+
   ## run simulation
   current_sim <- fast_lsdsim(
     grid_size = grid_size, 
@@ -450,6 +480,10 @@ if (!dir.exists(output_dir)) {
 
 res_selcull_quarant_vacc <- vector(mode = "list", length = n_rep)
 for (i in seq_len(n_rep)) {
+ 
+  ## read a delta file for this simulation
+  delta <- qread(delta_files[i])
+
   ## run simulation
   current_sim <- fast_lsdsim(
     grid_size = grid_size, 
@@ -519,6 +553,10 @@ if (!dir.exists(output_dir)) {
 
 res_selcull_quarant_vacc_insect <- vector(mode = "list", length = n_rep)
 for (i in seq_len(n_rep)) {
+
+  ## read a delta file for this simulation
+  delta <- qread(delta_files[i])
+
   ## run simulation
   current_sim <- fast_lsdsim(
     grid_size = grid_size, 
@@ -580,6 +618,10 @@ if (!dir.exists(output_dir)) {
 
 res_all <- vector(mode = "list", length = n_rep)
 for (i in seq_len(n_rep)) {
+
+  ## read a delta file for this simulation
+  delta <- qread(delta_files[i])
+
   ## run simulation
   current_sim <- fast_lsdsim(
     grid_size = grid_size, 

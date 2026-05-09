@@ -7,7 +7,7 @@ test_that(
     
     ## diagonal delta with no diffusion, even with all cliques
     delta <- make_delta(make_grid(3), 0, 
-                        p_clique = 1, clique_connect = 1)
+                        p_clique = 1, clique_connect = 1e30)
     expect_equal(delta, diag(1, 9))
     
     ## delta for 3x3 grid with 10% diffusion
@@ -35,7 +35,7 @@ test_that(
   {
     ## corner case: all cliques
     res <- make_delta(make_grid(5), diffusion = 0.3, 
-                      p_clique = 1, clique_connect = 1)
+                      p_clique = 1, clique_connect = 1e30)
     expect_equal(rowSums(res > 0), rep(25, 25))
     
     ## 20% cliques, fully connected, 50% diffusion
@@ -43,7 +43,7 @@ test_that(
     ## we check that between 15% and 25% of location are fully connected
     res <- make_delta(make_grid(30), diffusion = 0.5, 
                         p_clique = 0.2, 
-                        clique_connect = 1)
+                        clique_connect = 1e30)
     expect_equal(diag(res), rep(0.5, 900))
     p_cliques <- mean(rowSums(res > 0) == 900)
     expect_true(p_cliques > 0.15)
