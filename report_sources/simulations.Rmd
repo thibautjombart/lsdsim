@@ -473,7 +473,7 @@ In these simulations, we use:
  
 
 ```{r selcull_quarant_vacc, eval = params$run_sim}
-output_dir <- here::here("outputs", "simulations", "quarant_vacc", Sys.Date())
+output_dir <- here::here("outputs", "simulations", "selcull_quarant_vacc", Sys.Date())
 if (!dir.exists(output_dir)) {
   dir.create(output_dir, recursive = TRUE)
 }
